@@ -8,7 +8,6 @@ public class User {
     private String email;
     private String mobile;
     private String password;
-    
     @JsonIgnore
     private String repeatPassword;
     private String defaultStreetName;

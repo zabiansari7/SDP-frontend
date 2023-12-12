@@ -1,5 +1,7 @@
 package de.srh.toolify.frontend.views.login;
 
+import java.io.IOException;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,7 +32,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 
+import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.LoginRequest;
+import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.data.User;
 import de.srh.toolify.frontend.views.MainLayout;
 
@@ -100,48 +104,39 @@ public class LoginView extends Composite<VerticalLayout> {
 			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 			return;
 		}
-		authenticate(user.getEmail(), user.getPassword());
-		
-	}
-    
-    private void authenticate(String email, String password) {
-        // Make a request to Spring Boot backend for authentication
-        String apiUrl = "http://localhost:8080/public/api/login/user";
-        RestTemplate restTemplate = new RestTemplate();
-        
-     // Set Content-Type header to JSON
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        System.out.println("LOGINNNNNN :: " + email +"___"+ password);
-        LoginRequest loginRequest = new LoginRequest(email, password);
-        HttpEntity<LoginRequest> requestEntity = new HttpEntity<>(loginRequest, headers);
-        ResponseEntity<String> response = null;
+		//authenticate(user.getEmail(), user.getPassword());
+    	RestClient client = new RestClient();
+    	ResponseData resp = client.requestHttpToJsonNode("POST", "http://localhost:8080/public/login/user", new LoginRequest(user.getEmail(), user.getPassword()), LoginRequest.class);
+    	
+    	// Check the response and handle accordingly
         try {
-        	response = restTemplate.postForEntity(apiUrl, requestEntity, String.class);
-            
-		} catch (Exception e) {
+			if (resp.getConnection().getResponseCode() == 202) {
+			    // Authentication successful, store the token in the Vaadin session
+				
+			    String token = resp.getConnection().getHeaderField(HttpHeaders.AUTHORIZATION).substring(7);
+			    VaadinSession.getCurrent().setAttribute("token", token);
+			    
+			    System.out.println("MY TOKEN ::::: " + VaadinSession.getCurrent().getAttribute("token"));
+			    
+			    
+			    Notification notification = Notification.show("Login successful");
+				notification.setDuration(5000);
+				notification.setPosition(Position.TOP_CENTER);
+				notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+				
+			    // Navigate to the secured part of your Vaadin application
+			    UI.getCurrent().navigate("home");
+			} else {
+			    // Authentication failed, show an error message
+				Notification notification = Notification.show("Login failed. Please try with correct email and password.");
+				notification.setDuration(5000);
+				notification.setPosition(Position.TOP_CENTER);
+				notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			Notification.show("Authenitcation Failed");
 		}
-       
-
-        // Check the response and handle accordingly
-        if (response.getStatusCode() == HttpStatus.ACCEPTED) {
-            // Authentication successful, store the token in the Vaadin session
-            String token = response.getBody();
-            VaadinSession.getCurrent().setAttribute("authToken", token);
-            
-            Notification notification = Notification.show("Login successful");
-        	notification.setDuration(5000);
-			notification.setPosition(Position.BOTTOM_CENTER);
-			notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-			
-            // Navigate to the secured part of your Vaadin application
-            UI.getCurrent().navigate("hello");
-        } else {
-            // Authentication failed, show an error message
-            Notification.show("Authentication failed", 3000, Position.TOP_CENTER);
-        }
     }
+
 }

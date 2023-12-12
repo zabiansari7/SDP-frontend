@@ -35,6 +35,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 
+import de.srh.toolify.frontend.client.RestClient;
+import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.data.User;
 import de.srh.toolify.frontend.views.MainLayout;
 
@@ -80,6 +82,7 @@ public class RegisterView extends Composite<VerticalLayout> {
         firstname.setRequiredIndicatorVisible(true);
         firstname.setClearButtonVisible(true);
         lastname.setLabel("Last Name");
+        lastname.setRequired(true);
         email.setLabel("Email");
         mobile.setLabel("Mobile");
         password.setLabel("Password");
@@ -143,7 +146,33 @@ public class RegisterView extends Composite<VerticalLayout> {
 			notification.setPosition(Position.BOTTOM_CENTER);
 			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 		} else {
-			sendData(binder.getBean());
+			//sendData(binder.getBean());
+			RestClient client = new RestClient();
+			ResponseData resp = client.requestHttpToJsonNode("POST", "http://localhost:8080/public/users/user", binder.getBean(), User.class);
+			int responseCode = 0;
+			try {
+				responseCode = resp.getConnection().getResponseCode();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            if (responseCode == 201) {
+            	Notification notification = Notification.show("Registration successfully");
+            	notification.setDuration(5000);
+    			notification.setPosition(Position.BOTTOM_CENTER);
+    			notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    			getUI().get().navigate("/login");
+    			
+            } else {
+            	String errMessage = resp.getNode().get("message").textValue();
+            	if (errMessage.contains("Duplicate entry")) {
+            		errMessage = "Email already exist. Try with another email address";
+				}
+            	Notification notification = Notification.show(errMessage);
+            	notification.setDuration(5000);
+    			notification.setPosition(Position.BOTTOM_CENTER);
+    			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
 		}
 	}
     
