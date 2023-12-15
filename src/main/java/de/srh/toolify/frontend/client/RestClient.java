@@ -18,7 +18,7 @@ import de.srh.toolify.frontend.data.ResponseData;
 
 public class RestClient {
 
-	public ResponseData requestHttpToJsonNode(String method, String endpointUrl, Object body, Class<?> c) {
+	public ResponseData requestHttp(String method, String endpointUrl, Object body, Class<?> c) {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ResponseData responseObject = new ResponseData();
 		String jsonBody = null;

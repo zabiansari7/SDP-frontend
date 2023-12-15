@@ -1,17 +1,7 @@
 package de.srh.toolify.frontend.views.register;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -31,6 +21,7 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
@@ -82,21 +73,48 @@ public class RegisterView extends Composite<VerticalLayout> {
         firstname.setRequiredIndicatorVisible(true);
         firstname.setClearButtonVisible(true);
         lastname.setLabel("Last Name");
-        lastname.setRequired(true);
+        lastname.setRequiredIndicatorVisible(true);
         email.setLabel("Email");
+        email.setRequiredIndicatorVisible(true);
         mobile.setLabel("Mobile");
+        mobile.setRequiredIndicatorVisible(true);
+        mobile.setMaxLength(11);
+        mobile.setValueChangeMode(ValueChangeMode.EAGER);
+        mobile.setPattern("^\\+\\d{0,11}$");
+        mobile.addValueChangeListener(event -> {
+            String value = event.getValue();
+            boolean isValid = value.matches("^\\+\\d{0,11}$");
+            mobile.setInvalid(!isValid);
+            if (isValid) {
+            	mobile.setHelperText("");
+			} else {
+				mobile.setHelperText("Mobile number should start with '+' and then only 11 numbers");
+				
+			}
+            
+        });
         password.setLabel("Password");
         password.setWidth("min-content");
+        password.setRequiredIndicatorVisible(true);
+        binder.forField(password)
+        	.withValidator(this::isValidPassword, "Password must have at least 8 characters, one capital letter, one special character, and one digit.")
+        	.bind(User::getPassword, User::setPassword);
+        
         repeatPassword.setLabel("Repeat Password");
         repeatPassword.setWidth("min-content");
+        repeatPassword.setRequiredIndicatorVisible(true);
         defaultStreetName.setLabel("Street");
+        defaultStreetName.setRequiredIndicatorVisible(true);
         defaultStreetNumber.setLabel("Number");
         defaultStreetNumber.setWidth("min-content");
+        defaultStreetNumber.setRequiredIndicatorVisible(true);
         defaultPincode.setLabel("Pincode");
         defaultPincode.setWidth("min-content");
         defaultPincode.setRequired(true);
+        defaultPincode.setRequiredIndicatorVisible(true);
         defaultCity.setLabel("City");
         defaultCity.setWidth("min-content");
+        defaultCity.setRequiredIndicatorVisible(true);
         layoutRow.addClassName(Gap.MEDIUM);
         layoutRow.setWidth("100%");
         layoutRow.getStyle().set("flex-grow", "1");
@@ -129,6 +147,18 @@ public class RegisterView extends Composite<VerticalLayout> {
        
     }
 	
+	private boolean isValidPassword(String value) {
+	    // Password must have at least 8 characters, one capital letter, one special character, and one digit
+	    String passwordRegex = "^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$";
+	    return value.matches(passwordRegex);
+	}
+	
+	private boolean isValidMobileNumber(String value) {
+	    String mobileNumberRegex = "^\\\\+\\\\d{0,15}$";
+	    return value.matches(mobileNumberRegex);
+	}
+
+
 	private void onRegister(
 			Binder<User> binder) {
 		if (binder.getFields().anyMatch(a -> a.isEmpty())) {
@@ -139,6 +169,15 @@ public class RegisterView extends Composite<VerticalLayout> {
 			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 			return;
 		}
+		
+		if (!isValidPassword(binder.getBean().getPassword())) {
+	        Notification notification = Notification
+	                .show("Invalid password format. Please follow the password requirements.");
+	        notification.setDuration(5000);
+	        notification.setPosition(Position.BOTTOM_CENTER);
+	        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+	        return;
+	    }
 		if (!this.isPasswordMatched(binder.getBean().getPassword(), binder.getBean().getRepeatPassword())) {
 			Notification notification = Notification
 			        .show("Password Mismatched !!!");
@@ -146,14 +185,12 @@ public class RegisterView extends Composite<VerticalLayout> {
 			notification.setPosition(Position.BOTTOM_CENTER);
 			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 		} else {
-			//sendData(binder.getBean());
 			RestClient client = new RestClient();
-			ResponseData resp = client.requestHttpToJsonNode("POST", "http://localhost:8080/public/users/user", binder.getBean(), User.class);
+			ResponseData resp = client.requestHttp("POST", "http://localhost:8080/public/users/user", binder.getBean(), User.class);
 			int responseCode = 0;
 			try {
 				responseCode = resp.getConnection().getResponseCode();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
             if (responseCode == 201) {
@@ -178,95 +215,6 @@ public class RegisterView extends Composite<VerticalLayout> {
     
 	private boolean isPasswordMatched(String password1, String password2) {
 		return password1.equals(password2);
-	}
-	
-	private void sendData(User user) {
-		String endpointUrl = "http://localhost:8080/public/api/users/user";
-		ObjectMapper objectMapper = new ObjectMapper();
-        String jsonBody = null;
-		try {
-			jsonBody = objectMapper.writeValueAsString(user);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		}
-		try {
-			URL url = new URL(endpointUrl);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-            
-            JsonNode node = null;
-            try {
-            	try(InputStream inputStream = connection.getInputStream()){
-            		try(BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))){
-            			StringBuilder responseStringBuilder = new StringBuilder();
-                        String line;
-                        while ((line = br.readLine()) != null) {
-                            responseStringBuilder.append(line);
-                        }
-                        // Print the server response body
-                        System.out.println("Response Body: " + responseStringBuilder.toString());
-                        node = objectMapper.readTree(responseStringBuilder.toString());
-            		}
-            	}
-				
-			} catch (IOException e) {
-				try (InputStream errorStream = connection.getErrorStream()) {
-			        if (errorStream != null) {
-			            try (BufferedReader br = new BufferedReader(new InputStreamReader(errorStream))) {
-			                StringBuilder responseStringBuilder = new StringBuilder();
-			                String line;
-			                while ((line = br.readLine()) != null) {
-			                    responseStringBuilder.append(line);
-			                }
-
-			                // Print the server response body
-			                System.out.println("Error Response Body: " + responseStringBuilder.toString());
-
-			                // Convert the error response JSON to a JsonNode
-			                node = objectMapper.readTree(responseStringBuilder.toString());
-
-			                // Handle the error response as needed
-			                //Notification.show("Error Response: " + node);
-			            }
-			        } else {
-			            // No error stream available, handle accordingly
-			            //Notification.show("No error stream available");
-			        	System.out.println("ERROR NO STREAM AVAILABLE");
-			        }
-			    }
-			}
-            
-            
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode == 201) {
-            	Notification notification = Notification.show("Registration successfully");
-            	notification.setDuration(5000);
-    			notification.setPosition(Position.BOTTOM_CENTER);
-    			notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-    			getUI().get().navigate("/login");
-    			
-            } else {
-            	String errMessage = node.get("message").textValue();
-            	if (errMessage.contains("Duplicate entry")) {
-            		errMessage = "Email already exist. Try with another email address";
-				}
-            	Notification notification = Notification.show(errMessage);
-            	notification.setDuration(5000);
-    			notification.setPosition(Position.BOTTOM_CENTER);
-    			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            }
-		} catch (Exception e) {
-            e.printStackTrace();
-            //Notification.show("An error occurred: " + e.getMessage());
-        }
-
 	}
     
 }

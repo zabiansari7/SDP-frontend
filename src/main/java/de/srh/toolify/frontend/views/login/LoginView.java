@@ -2,12 +2,7 @@ package de.srh.toolify.frontend.views.login;
 
 import java.io.IOException;
 
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
 
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.UI;
@@ -17,8 +12,8 @@ import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.notification.Notification.Position;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
@@ -70,8 +65,10 @@ public class LoginView extends Composite<VerticalLayout> {
         layoutColumn3.getStyle().set("flex-grow", "1");
         email.setLabel("Email");
         email.setWidth("359px");
+        email.setRequiredIndicatorVisible(true);
         password.setLabel("Password");
         password.setWidth("359px");
+        password.setRequiredIndicatorVisible(true);
         layoutRow.addClassName(Gap.MEDIUM);
         layoutRow.setWidth("min-content");
         layoutRow.getStyle().set("flex-grow", "1");
@@ -106,16 +103,15 @@ public class LoginView extends Composite<VerticalLayout> {
 		}
 		//authenticate(user.getEmail(), user.getPassword());
     	RestClient client = new RestClient();
-    	ResponseData resp = client.requestHttpToJsonNode("POST", "http://localhost:8080/public/login/user", new LoginRequest(user.getEmail(), user.getPassword()), LoginRequest.class);
+    	ResponseData resp = client.requestHttp("POST", "http://localhost:8080/public/login/user", new LoginRequest(user.getEmail(), user.getPassword()), LoginRequest.class);
     	
     	// Check the response and handle accordingly
         try {
 			if (resp.getConnection().getResponseCode() == 202) {
-			    // Authentication successful, store the token in the Vaadin session
 				
+			    // Authentication successful, store the token in the Vaadin session
 			    String token = resp.getConnection().getHeaderField(HttpHeaders.AUTHORIZATION).substring(7);
-			    VaadinSession.getCurrent().setAttribute("token", token);
-			    
+			    VaadinSession.getCurrent().setAttribute("token", token);			 
 			    System.out.println("MY TOKEN ::::: " + VaadinSession.getCurrent().getAttribute("token"));
 			    
 			    
@@ -134,7 +130,6 @@ public class LoginView extends Composite<VerticalLayout> {
 				notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }

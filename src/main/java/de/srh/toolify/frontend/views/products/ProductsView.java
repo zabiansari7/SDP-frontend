@@ -1,5 +1,11 @@
 package de.srh.toolify.frontend.views.products;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -24,7 +30,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
 import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
+import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.Product;
+import de.srh.toolify.frontend.data.ResponseData;
 
 public class ProductsView extends Main implements HasComponents, HasStyle{
 	
@@ -42,56 +50,9 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
 	        mapper.registerModule(new JavaTimeModule());
 	        for (JsonNode productNode : products) {
 	        	Product product = mapper.convertValue(productNode, Product.class);
-				imageContainer.add(new ProductsCard(product.getName(), product.getImage(), product.getPrice(), product.getDescription()));
+				imageContainer.add(new ProductsCard(product.getProductId(), product.getName(), product.getImage(), product.getPrice(), product.getDescription()));
 			}
 		}
-
-        
-//        
-//        imageContainer.add(new ProductsCard("Snow mountains under stars",
-//                "https://m.media-amazon.com/images/I/61EgdiOHI9L._AC_SX679_.jpg?auto=format&fit=crop&w=750&q=80"));
-//        imageContainer.add(new ProductsCard("Snow covered mountain",
-//                "https://m.media-amazon.com/images/I/61Q1UbgbTBL._AC_SX679_.jpg?auto=format&fit=crop&w=750&q=80"));
-//        imageContainer.add(new ProductsCard("River between mountains",
-//                "https://m.media-amazon.com/images/I/61-uPIBgh3L.AC_SX679.jpg?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=375&q=80"));
-//        imageContainer.add(new ProductsCard("Milky way on mountains",
-//                "https://m.media-amazon.com/images/I/517-lGpCczL.AC_SX679.jpg?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&auto=format&fit=crop&w=750&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain with fog",
-//                "https://images.unsplash.com/photo-1513147122760-ad1d5bf68cdb?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-//        imageContainer.add(new ProductsCard("Mountain at night",
-//                "https://images.unsplash.com/photo-1562832135-14a35d25edef?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=815&q=80"));
-
     }
 
     private void constructUI() {
@@ -109,9 +70,28 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
         headerContainer.add(header, description);
 
         Select<String> sortBy = new Select<>();
-        sortBy.setLabel("Sort by");
-        sortBy.setItems("Popularity", "Newest first", "Oldest first");
-        sortBy.setValue("Popularity");
+        sortBy.setLabel("Filter");
+        List<String> sortItems = getAllCategories();
+        sortItems.add(0, "All");
+        sortBy.setItems(sortItems);
+        sortBy.setValue("All");
+        sortBy.addValueChangeListener(e -> {
+        	RestClient restClient = new RestClient();
+        	String encodedParam = null;
+        	ResponseData resp;
+        	if (sortBy.getValue().equals("All")) {
+        		resp = restClient.requestHttp("GET", "http://localhost:8080/public/products/all", null, null);
+        		populateProducts(resp, imageContainer);
+			} else {
+				try {
+					encodedParam = URLEncoder.encode(sortBy.getValue(), StandardCharsets.UTF_8.toString());
+				} catch (UnsupportedEncodingException ex) {
+					ex.printStackTrace();
+				}
+				resp = restClient.requestHttp("GET", "http://localhost:8080/private/admin/products/product?categoryName=" + encodedParam, null, null);
+				populateProducts(resp, imageContainer);
+			}
+        });
 
         imageContainer = new OrderedList();
         imageContainer.addClassNames(Gap.MEDIUM, Display.GRID, ListStyleType.NONE, Margin.NONE, Padding.NONE);
@@ -119,7 +99,25 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
         
         container.add(sortBy);
         add(container, imageContainer);
-
     }
+    
+    private List<String> getAllCategories() {
+		RestClient client = new RestClient();
+		ResponseData resp = client.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
+		List<String> categories = new ArrayList<>();
+		for (JsonNode categoryNode : resp.getNode()) {
+			categories.add(categoryNode.get("categoryName").textValue());			
+		}
+		return categories;
+	}
+    
+    private void populateProducts(ResponseData data, OrderedList imageContainer) {
+    	JsonNode node = data.getNode();
+		imageContainer.removeAll();
+		for (JsonNode productNode : node) {
+            Product product = mapper.convertValue(productNode, Product.class);
+            imageContainer.add(new ProductsCard(product.getProductId(), product.getName(), product.getImage(), product.getPrice(), product.getDescription()));
+        }
+	}
 
 }

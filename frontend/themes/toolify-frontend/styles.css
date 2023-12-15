@@ -1,1 +1,9 @@
 @import url('./main-layout.css');
+
+.clickable-button {
+    cursor: pointer;
+}
+
+.helper-text {
+	color: "red";
+}
