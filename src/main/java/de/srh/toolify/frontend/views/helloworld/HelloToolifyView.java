@@ -11,6 +11,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 
 import de.srh.toolify.frontend.client.RestClient;
@@ -32,6 +33,7 @@ public class HelloToolifyView extends Composite<VerticalLayout> {
     ProductsView productsView;
     
     public HelloToolifyView() {
+    	
     	RestClient client = new RestClient();
     	ResponseData resp = client.requestHttp("GET", "http://localhost:8080/public/products/all", null, null);
     	JsonNode products = resp.getNode();
@@ -55,8 +57,15 @@ public class HelloToolifyView extends Composite<VerticalLayout> {
         getContent().setFlexGrow(1.0, layoutColumn2);
         layoutColumn2.setWidth("100%");
         layoutColumn2.getStyle().set("flex-grow", "1");
+        System.out.println("VADIN SESSION CURRENT AVAILABLE :: " + VaadinSession.getCurrent().getAttribute("token"));
+        
         layoutRow.add(registerButton);
         layoutRow.add(loginButton);
+        if (VaadinSession.getCurrent().getAttribute("token") != null && VaadinSession.getCurrent().getAttribute("token") != "" ) {
+        	System.out.println("VADIN SESSION :: " + VaadinSession.getCurrent().getAttribute("token"));
+			registerButton.setText("Profile");
+			loginButton.setText("Logout");
+		}
         layoutRow.setJustifyContentMode(JustifyContentMode.END);
         productsView = new ProductsView(products);
         layoutColumn2.add(productsView);

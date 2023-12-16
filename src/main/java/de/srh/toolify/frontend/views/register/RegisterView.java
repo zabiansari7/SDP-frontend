@@ -78,17 +78,17 @@ public class RegisterView extends Composite<VerticalLayout> {
         email.setRequiredIndicatorVisible(true);
         mobile.setLabel("Mobile");
         mobile.setRequiredIndicatorVisible(true);
-        mobile.setMaxLength(11);
+        mobile.setMaxLength(15);
         mobile.setValueChangeMode(ValueChangeMode.EAGER);
-        mobile.setPattern("^\\+\\d{0,11}$");
+        mobile.setPattern("^\\+\\d{0,15}$");
         mobile.addValueChangeListener(event -> {
             String value = event.getValue();
-            boolean isValid = value.matches("^\\+\\d{0,11}$");
+            boolean isValid = value.matches("^\\+\\d{0,15}$");
             mobile.setInvalid(!isValid);
             if (isValid) {
             	mobile.setHelperText("");
 			} else {
-				mobile.setHelperText("Mobile number should start with '+' and then only 11 numbers");
+				mobile.setHelperText("Mobile number should start with '+' and then only 15 numbers");
 				
 			}
             

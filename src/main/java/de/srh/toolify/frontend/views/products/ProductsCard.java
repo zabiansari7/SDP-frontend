@@ -2,6 +2,8 @@ package de.srh.toolify.frontend.views.products;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -10,6 +12,8 @@ import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
@@ -23,6 +27,11 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
 
+import de.srh.toolify.frontend.client.RestClient;
+import de.srh.toolify.frontend.data.Product;
+import de.srh.toolify.frontend.data.PurchaseItem;
+import de.srh.toolify.frontend.data.ResponseData;
+import de.srh.toolify.frontend.views.cart.CartService;
 import de.srh.toolify.frontend.views.cart.CartView;
 
 public class ProductsCard extends ListItem{
@@ -72,10 +81,25 @@ public class ProductsCard extends ListItem{
         badge.getElement().setProperty("productId", productId);
         badge.addClassName("clickable-button");
         badge.setText("Add to Cart"); 
-        badge.addClickListener(c -> UI.getCurrent().navigate(CartView.class, productId));
+        badge.addClickListener(c -> {
+        	CartService.getInstance().addToCart(prepareCartItem(productId));
+        	Notification notification = Notification.show(String.format("Product '%s' added to cart", title));
+        	notification.setDuration(5000);
+			notification.setPosition(Position.TOP_CENTER);
+			notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+        });
         
         add(div, headerButton, subtitle, productDescription, badge);
 
     }
+	
+	private PurchaseItem prepareCartItem(Long productId) {
+		RestClient client = new RestClient();
+		ResponseData data = client.requestHttp("GET", "http://localhost:8080/public/products/product/" + productId, null, null);		
+		JsonNode productNode = data.getNode();
+		ObjectMapper mapper = new ObjectMapper();
+		Product product = mapper.convertValue(productNode, Product.class);
+		return new PurchaseItem(product.getProductId(), product.getQuantity(), product.getPrice(), product.getName(), 1);
+	}
 
 }

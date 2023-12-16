@@ -37,6 +37,7 @@ import de.srh.toolify.frontend.views.MainLayout;
 @Route(value = "login", layout = MainLayout.class)
 @Uses(Icon.class)
 public class LoginView extends Composite<VerticalLayout> {
+	private static final long serialVersionUID = -1949527920549114653L;
 	private Binder<User> binder = new Binder<>(User.class);
 	VerticalLayout layoutColumn2 = new VerticalLayout();
     H3 h3 = new H3();
@@ -111,9 +112,9 @@ public class LoginView extends Composite<VerticalLayout> {
 				
 			    // Authentication successful, store the token in the Vaadin session
 			    String token = resp.getConnection().getHeaderField(HttpHeaders.AUTHORIZATION).substring(7);
-			    VaadinSession.getCurrent().setAttribute("token", token);			 
-			    System.out.println("MY TOKEN ::::: " + VaadinSession.getCurrent().getAttribute("token"));
-			    
+			    VaadinSession.getCurrent().setAttribute("token", token);
+			    VaadinSession.getCurrent().setAttribute("user", resp.getNode());
+			    VaadinSession.getCurrent().setAttribute("cartItems", null);
 			    
 			    Notification notification = Notification.show("Login successful");
 				notification.setDuration(5000);

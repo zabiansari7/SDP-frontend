@@ -1,12 +1,15 @@
 package de.srh.toolify.frontend.views.products;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.AvatarGroup;
 import com.vaadin.flow.component.avatar.AvatarGroup.AvatarGroupItem;
 import com.vaadin.flow.component.button.Button;
@@ -24,10 +27,12 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
-
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
@@ -38,8 +43,12 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
 
 import de.srh.toolify.frontend.client.RestClient;
+import de.srh.toolify.frontend.data.Product;
+import de.srh.toolify.frontend.data.PurchaseItem;
 import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.cart.CartService;
+import de.srh.toolify.frontend.views.cart.CartView;
 import jakarta.annotation.security.PermitAll;
 
 @Route(value = "product", layout = MainLayout.class)
@@ -144,6 +153,16 @@ public class ProductDescriptionView extends Composite<VerticalLayout> implements
 		data = client.requestHttp("GET", "http://localhost:8080/public/products/product/"+ productId +"/quantity", null, null);
 		String maxQuantityNode = data.getNode().get("message").textValue();
 		quantity.setMax(Integer.valueOf(maxQuantityNode));
+		addToCartButton.addClassName("clickable-button");
+		addToCartButton.addClickListener(event -> {
+			ObjectMapper mapper = new ObjectMapper();
+			Product product = mapper.convertValue(productNode, Product.class);
+			PurchaseItem purchase = new PurchaseItem(product.getProductId(), product.getQuantity(), product.getPrice(), product.getName(), quantity.getValue());
+			CartService.getInstance().addToCart(purchase);
+			UI.getCurrent().navigate(CartView.class);
+			
+		});
+		
 		List<Pair<String, String>> keyValuePairs = convertPProductToList(productNode);
 		stripedGrid.setItems(keyValuePairs);
 		stripedGrid.addColumn(Pair::getKey).setHeader("Property");
