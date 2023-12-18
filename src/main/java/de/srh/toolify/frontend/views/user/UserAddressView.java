@@ -25,6 +25,7 @@ import de.srh.toolify.frontend.views.MainLayout;
 public class UserAddressView extends Composite<VerticalLayout> {
 
     public UserAddressView() {
+    	VerticalLayout main = new VerticalLayout();
         HorizontalLayout layoutRow = new HorizontalLayout();
         H4 h4 = new H4();
         H4 h42 = new H4();
@@ -39,8 +40,8 @@ public class UserAddressView extends Composite<VerticalLayout> {
         H5 h54 = new H5();
         H5 h55 = new H5();
         Button buttonSecondary = new Button();
-        getContent().setWidth("100%");
-        getContent().setHeight("752px");
+        main.setWidth("100%");
+        main.setHeight("752px");
         layoutRow.setWidthFull();
         getContent().setFlexGrow(1.0, layoutRow);
         layoutRow.addClassName(Gap.MEDIUM);
@@ -68,7 +69,7 @@ public class UserAddressView extends Composite<VerticalLayout> {
         buttonPrimary.getStyle().set("flex-grow", "1");
         buttonPrimary.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         layoutRow2.setWidthFull();
-        getContent().setFlexGrow(1.0, layoutRow2);
+        main.setFlexGrow(1.0, layoutRow2);
         layoutRow2.addClassName(Gap.MEDIUM);
         layoutRow2.setWidth("100%");
         layoutRow2.setHeight("55px");
@@ -98,14 +99,14 @@ public class UserAddressView extends Composite<VerticalLayout> {
         layoutRow2.setAlignSelf(FlexComponent.Alignment.START, buttonSecondary);
         buttonSecondary.setWidth("min-content");
         buttonSecondary.setHeight("20px");
-        getContent().add(layoutRow);
+        main.add(layoutRow);
         layoutRow.add(h4);
         layoutRow.add(h42);
         layoutRow.add(h43);
         layoutRow.add(h44);
         layoutRow.add(h45);
         layoutRow.add(buttonPrimary);
-        getContent().add(layoutRow2);
+        main.add(layoutRow2);
         layoutRow2.add(h5);
         layoutRow2.add(h52);
         layoutRow2.add(h53);

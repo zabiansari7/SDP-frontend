@@ -113,6 +113,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         profileButton.setId("profileBtn");
         profileButton.setWidth("min-content");
         profileButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        profileButton.addClickListener(e -> UI.getCurrent().navigate("profile"));
         logoutButton.setText("Logout");
         logoutButton.setId("logoutBtn");
         logoutButton.setWidth("min-content");
@@ -120,6 +121,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         logoutButton.addClickListener(e -> {
         	VaadinSession.getCurrent().setAttribute("token", "");        	
         	VaadinSession.getCurrent().setAttribute("cartItems", null);
+        	VaadinSession.getCurrent().setAttribute("user", null);
 			layoutRow.remove(cartButton, profileButton, logoutButton);
 			layoutRow.add(loginButton, registerButton);
 			UI.getCurrent().navigate("home");

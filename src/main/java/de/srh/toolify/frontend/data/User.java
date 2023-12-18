@@ -137,5 +137,14 @@ public class User {
 	public void setUpdatedOn(Instant updatedOn) {
 		this.updatedOn = updatedOn;
 	}
+
+	@Override
+	public String toString() {
+		return "User [firstname=" + firstname + ", lastname=" + lastname + ", email=" + email + ", mobile=" + mobile
+				+ ", defaultStreetName=" + defaultStreetName + ", defaultStreetNumber=" + defaultStreetNumber
+				+ ", defaultPincode=" + defaultPincode + ", defaultCity=" + defaultCity + "]";
+	}
+	
+	
 	
 }

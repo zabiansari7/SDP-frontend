@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public class Product {
-	private int sr;
 	private Long productId;
     private String name;
     private String description;
@@ -23,14 +22,6 @@ public class Product {
     private Category category;
 	private Instant createdOn;
 	private Instant updatedOn;
-	
-	public int getSr() {
-		return sr;
-	}
-
-	public void setSr(int sr) {
-		this.sr = sr;
-	}
 
 	public Long getProductId() {
 		return productId;

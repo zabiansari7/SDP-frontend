@@ -9,7 +9,7 @@ public class PurchaseItem {
 	private BigDecimal purchasePrice;
 	private String productName;
 	private int requestedQuantity;
-
+	
 	public PurchaseItem(Long productId, int quantity, BigDecimal purchasePrice, String productName, int requestedQuantity) {
 		this.productId = productId;
 		this.quantity = quantity;

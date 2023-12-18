@@ -26,6 +26,7 @@ import jakarta.annotation.security.PermitAll;
 public class UserOrderHistoryView extends Composite<VerticalLayout> {
 
     public UserOrderHistoryView() {
+    	VerticalLayout main = new VerticalLayout();
         HorizontalLayout layoutRow = new HorizontalLayout();
         H4 h4 = new H4();
         H4 h42 = new H4();
@@ -39,10 +40,10 @@ public class UserOrderHistoryView extends Composite<VerticalLayout> {
         H5 h54 = new H5();
         Button buttonPrimary = new Button();
         HorizontalLayout layoutRow3 = new HorizontalLayout();
-        getContent().setWidth("100%");
-        getContent().getStyle().set("flex-grow", "1");
+        main.setWidth("100%");
+        main.getStyle().set("flex-grow", "1");
         layoutRow.setWidthFull();
-        getContent().setFlexGrow(1.0, layoutRow);
+        main.setFlexGrow(1.0, layoutRow);
         layoutRow.addClassName(Gap.MEDIUM);
         layoutRow.setWidth("100%");
         layoutRow.setHeight("30px");
@@ -60,7 +61,7 @@ public class UserOrderHistoryView extends Composite<VerticalLayout> {
         h45.setText("Invoice");
         h45.setWidth("290px");
         layoutRow2.setWidthFull();
-        getContent().setFlexGrow(1.0, layoutRow2);
+        main.setFlexGrow(1.0, layoutRow2);
         layoutRow2.addClassName(Gap.MEDIUM);
         layoutRow2.setWidth("100%");
         layoutRow2.setHeight("56px");
@@ -81,22 +82,22 @@ public class UserOrderHistoryView extends Composite<VerticalLayout> {
         buttonPrimary.setWidth("290px");
         buttonPrimary.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         layoutRow3.setWidthFull();
-        getContent().setFlexGrow(1.0, layoutRow3);
+        main.setFlexGrow(1.0, layoutRow3);
         layoutRow3.addClassName(Gap.MEDIUM);
         layoutRow3.setWidth("100%");
         layoutRow3.getStyle().set("flex-grow", "1");
-        getContent().add(layoutRow);
+        main.add(layoutRow);
         layoutRow.add(h4);
         layoutRow.add(h42);
         layoutRow.add(h43);
         layoutRow.add(h44);
         layoutRow.add(h45);
-        getContent().add(layoutRow2);
+        main.add(layoutRow2);
         layoutRow2.add(h5);
         layoutRow2.add(h52);
         layoutRow2.add(h53);
         layoutRow2.add(h54);
         layoutRow2.add(buttonPrimary);
-        getContent().add(layoutRow3);
+        main.add(layoutRow3);
     }
 }

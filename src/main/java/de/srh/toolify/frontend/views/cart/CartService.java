@@ -22,12 +22,14 @@ public class CartService {
         return INSTANCE;
     }
 
+    @SuppressWarnings("unchecked")
     public List<PurchaseItem> getCartItems() {
         VaadinSession vaadinSession = VaadinSession.getCurrent();
         List<PurchaseItem> cartItems = (List<PurchaseItem>) vaadinSession.getAttribute(CART_ITEMS_ATTRIBUTE);
         return cartItems != null ? new ArrayList<>(cartItems) : new ArrayList<>();
     }
 
+    @SuppressWarnings("unchecked")
     public void addToCart(PurchaseItem cartItem) {
         VaadinSession vaadinSession = VaadinSession.getCurrent();
         List<PurchaseItem> cartItems = (List<PurchaseItem>) vaadinSession.getAttribute(CART_ITEMS_ATTRIBUTE);
@@ -43,6 +45,7 @@ public class CartService {
         vaadinSession.setAttribute(CART_ITEMS_ATTRIBUTE, cartItems);
     }
     
+    @SuppressWarnings("unchecked")
     public void removeFromCart(PurchaseItem cartItem) {
     	VaadinSession vaadinSession = VaadinSession.getCurrent();
         List<PurchaseItem> cartItems = (List<PurchaseItem>) vaadinSession.getAttribute(CART_ITEMS_ATTRIBUTE);

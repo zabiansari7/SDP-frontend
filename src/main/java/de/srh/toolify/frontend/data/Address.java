@@ -5,7 +5,7 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Address {
-	
+	@JsonIgnore
 	private Long addressID;
 	private String streetName;
 	private int streetNumber;

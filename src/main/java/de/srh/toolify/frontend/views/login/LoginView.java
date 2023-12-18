@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.http.HttpHeaders;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -122,7 +123,14 @@ public class LoginView extends Composite<VerticalLayout> {
 				notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 				
 			    // Navigate to the secured part of your Vaadin application
-			    UI.getCurrent().navigate("home");
+				JsonNode userNode = (JsonNode) VaadinSession.getCurrent().getAttribute("user");
+				String hasRole = userNode.get("hasRole").textValue();
+				if (hasRole.contains("ROLE_ADMIN")) {
+					UI.getCurrent().navigate("profile");
+				} else {
+					UI.getCurrent().navigate("home");
+				}
+			    
 			} else {
 			    // Authentication failed, show an error message
 				Notification notification = Notification.show("Login failed. Please try with correct email and password.");

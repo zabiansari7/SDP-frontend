@@ -26,7 +26,7 @@ import de.srh.toolify.frontend.data.PurchaseItem;
 import de.srh.toolify.frontend.views.MainLayout;
 import jakarta.annotation.security.PermitAll;
 
-@PageTitle("Toolify | Cart")
+@PageTitle("Cart | Toolify")
 @Route(value = "cart", layout = MainLayout.class)
 @PermitAll
 @Uses(Icon.class)
