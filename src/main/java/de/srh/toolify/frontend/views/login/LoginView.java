@@ -126,7 +126,7 @@ public class LoginView extends Composite<VerticalLayout> {
 				JsonNode userNode = (JsonNode) VaadinSession.getCurrent().getAttribute("user");
 				String hasRole = userNode.get("hasRole").textValue();
 				if (hasRole.contains("ROLE_ADMIN")) {
-					UI.getCurrent().navigate("profile");
+					UI.getCurrent().navigate("admin");
 				} else {
 					UI.getCurrent().navigate("home");
 				}

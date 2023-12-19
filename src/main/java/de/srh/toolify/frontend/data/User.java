@@ -24,7 +24,9 @@ public class User {
     private Instant createdOn;
     @JsonIgnore
     private Instant updatedOn;
-    
+
+	public User() {}
+
 	public Long getUserId() {
 		return userId;
 	}

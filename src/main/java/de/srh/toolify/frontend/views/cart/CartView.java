@@ -102,7 +102,7 @@ public class CartView extends Composite<VerticalLayout> {
 			totalPrice = this.getTotalPrice().add(purchasePrice);
 			itemLayout.add(createLabel(String.valueOf(count)),
 					createLabel(purchaseItem.getProductName()), createIntegerField(0,
-							purchaseItem.getQuantity(), purchaseItem.getRequestedQuantity(), purchaseItem),
+							Integer.parseInt(purchaseItem.getQuantity()), purchaseItem.getRequestedQuantity(), purchaseItem),
 					createLabel(String.valueOf("€" + purchasePrice)));
 			count++;
 			getContent().add(itemLayout);

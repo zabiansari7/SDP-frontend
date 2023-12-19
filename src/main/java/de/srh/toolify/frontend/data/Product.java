@@ -1,5 +1,7 @@
 package de.srh.toolify.frontend.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 
@@ -8,7 +10,7 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal price;
-    private Integer quantity;
+    private String quantity;
     private String manufacturer;
     private String voltage;
     private String productDimensions;
@@ -20,8 +22,12 @@ public class Product {
     private String batteriesRequired;
     private String image;
     private Category category;
+	@JsonIgnore
 	private Instant createdOn;
+	@JsonIgnore
 	private Instant updatedOn;
+	
+	public Product() {}
 
 	public Long getProductId() {
 		return productId;
@@ -55,11 +61,11 @@ public class Product {
 		this.price = price;
 	}
 	
-	public Integer getQuantity() {
+	public String getQuantity() {
 		return quantity;
 	}
 	
-	public void setQuantity(Integer quantity) {
+	public void setQuantity(String quantity) {
 		this.quantity = quantity;
 	}
 	

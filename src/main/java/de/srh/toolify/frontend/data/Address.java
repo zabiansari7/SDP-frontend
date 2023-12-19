@@ -17,14 +17,16 @@ public class Address {
 	@JsonIgnore
 	private Instant updatedOn;
 	
-//	public Address(Long addressID, String streetName, int streetNumber, String cityName, int postCode, User user) {
-//		this.addressID = addressID;
-//		this.streetName = streetName;
-//		this.streetNumber = streetNumber;
-//		this.cityName = cityName;
-//		this.postCode = postCode;
-//		this.user = user;
-//	}
+	public Address() {}
+	
+	public Address(Long addressID, String streetName, int streetNumber, String cityName, int postCode, User user) {
+		this.addressID = addressID;
+		this.streetName = streetName;
+		this.streetNumber = streetNumber;
+		this.cityName = cityName;
+		this.postCode = postCode;
+		this.user = user;
+	}
 
 	public Long getAddressID() {
 		return addressID;

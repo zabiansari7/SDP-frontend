@@ -16,7 +16,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import de.srh.toolify.frontend.views.MainLayout;
 
 @PageTitle("Errorview")
-@Route(value = "errorview", layout = MainLayout.class)
+@Route(value = "/error", layout = MainLayout.class)
 @AnonymousAllowed
 @Uses(Icon.class)
 public class ErrorView extends Composite<VerticalLayout> {

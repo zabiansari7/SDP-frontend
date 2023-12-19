@@ -55,6 +55,8 @@ public class RegisterView extends Composite<VerticalLayout> {
     HorizontalLayout layoutRow = new HorizontalLayout();
     Button registerButton = new Button();
     Button alreadyMemberButton = new Button();
+    
+    private boolean valuesMatches;
 
 	public RegisterView() {
 		binder.bindInstanceFields(this);
@@ -68,7 +70,9 @@ public class RegisterView extends Composite<VerticalLayout> {
         h3.setText("Register");
         h3.setWidth("100%");
         formLayout2Col.setWidth("100%");
+        
         firstname.setLabel("First Name");
+        firstname.setValueChangeMode(ValueChangeMode.EAGER);
         firstname.setRequired(true);
         firstname.setPattern("^[a-zA-Z]*$");
         firstname.setMaxLength(30);
@@ -81,6 +85,7 @@ public class RegisterView extends Composite<VerticalLayout> {
         });
         
         lastname.setLabel("Last Name");
+        lastname.setValueChangeMode(ValueChangeMode.EAGER);
         lastname.setMaxLength(30);
         lastname.setRequiredIndicatorVisible(true);
         lastname.setRequired(true);
@@ -92,6 +97,7 @@ public class RegisterView extends Composite<VerticalLayout> {
         });
         
         email.setLabel("Email");
+        email.setValueChangeMode(ValueChangeMode.EAGER);
         email.setRequiredIndicatorVisible(true);
         email.setRequired(true);
         email.setPattern("^[A-Za-z0-9._%+-]+@[A-Za-z0-9]+\\.[A-Za-z]{2,}$");
@@ -115,16 +121,28 @@ public class RegisterView extends Composite<VerticalLayout> {
             	mobile.setHelperText("");
 			} else {
 				mobile.setHelperText("Mobile number should start with '+' and then only 15 numbers");
-				
 			}
             
         });
+        
         password.setLabel("Password");
+        password.setValueChangeMode(ValueChangeMode.EAGER);
         password.setWidth("min-content");
         password.setRequiredIndicatorVisible(true);
-        binder.forField(password)
-        	.withValidator(this::isValidPassword, "Password must have at least 8 characters, one capital letter, one special character, and one digit.")
-        	.bind(User::getPassword, User::setPassword);
+        password.setPattern("^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$");
+        password.addValueChangeListener(event -> {
+        	String value = event.getValue();
+        	boolean isValid = value.matches("^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$");
+        	password.setInvalid(!isValid);
+        	if (isValid) {
+            	password.setHelperText("");
+			} else {
+				password.setHelperText("Password must have at least 8 characters, one capital letter, one special character, and one digit");
+			}
+        });
+//        binder.forField(password)
+//        	.withValidator(this::isValidPassword, "Password must have at least 8 characters, one capital letter, one special character, and one digit.")
+//        	.bind(User::getPassword, User::setPassword);
         
         repeatPassword.setLabel("Repeat Password");
         repeatPassword.setWidth("min-content");
@@ -132,6 +150,7 @@ public class RegisterView extends Composite<VerticalLayout> {
         repeatPassword.setRequired(true);
         
         defaultStreetName.setLabel("Street");
+        defaultStreetName.setValueChangeMode(ValueChangeMode.EAGER);
         defaultStreetName.setRequiredIndicatorVisible(true);
         defaultStreetName.setPattern("^[a-zA-Z]*$");
         defaultStreetName.setRequired(true);
@@ -139,7 +158,7 @@ public class RegisterView extends Composite<VerticalLayout> {
         defaultStreetName.addValueChangeListener(event -> {
         	String value = event.getValue();
         	boolean isValid = value.matches(("\"^[a-zA-Z]*$\""));
-        	firstname.setInvalid(!isValid);
+        	defaultStreetName.setInvalid(!isValid);
         });
         
         defaultStreetNumber.setLabel("Number");
@@ -157,6 +176,8 @@ public class RegisterView extends Composite<VerticalLayout> {
         
        
         defaultPincode.setLabel("Pincode");
+        defaultPincode.setRequired(true);
+        defaultPincode.setRequiredIndicatorVisible(true);
         defaultPincode.setValueChangeMode(ValueChangeMode.EAGER);
         defaultPincode.addValueChangeListener(event -> {
             String newValue = event.getValue().replaceAll(",", "");
@@ -165,19 +186,17 @@ public class RegisterView extends Composite<VerticalLayout> {
         defaultPincode.setPattern("\\d{0,5}");
         defaultPincode.setWidth("min-content");
         defaultPincode.setMaxLength(5);
-        defaultPincode.setRequired(true);
-        defaultPincode.setRequiredIndicatorVisible(true);
-        
         
         defaultCity.setLabel("City");
         defaultCity.setWidth("min-content");
-        defaultCity.setPattern("^[a-zA-Z]*$");
+        defaultCity.setValueChangeMode(ValueChangeMode.EAGER);
+        defaultCity.setPattern("^[a-zA-Z]*$");;
         defaultCity.setMaxLength(30);
         defaultCity.setRequiredIndicatorVisible(true);
         defaultCity.addValueChangeListener(event -> {
         	String value = event.getValue();
-        	boolean isValid = value.matches(("\"^[a-zA-Z]*$\""));
-        	firstname.setInvalid(!isValid);
+        	boolean isValid = value.matches(("^[a-zA-Z]*$"));
+        	defaultCity.setInvalid(!isValid);
         });
         
         layoutRow.addClassName(Gap.MEDIUM);
@@ -211,6 +230,7 @@ public class RegisterView extends Composite<VerticalLayout> {
         binder.setBean(user);
     }
 	
+
 	private boolean isValidPassword(String value) {
 	    // Password must have at least 8 characters, one capital letter, one special character, and one digit
 	    String passwordRegex = "^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$";
@@ -227,6 +247,8 @@ public class RegisterView extends Composite<VerticalLayout> {
 			notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 			return;
 		}
+		
+		
 		
 		if (!isValidPassword(binder.getBean().getPassword())) {
 	        Notification notification = Notification
@@ -270,6 +292,9 @@ public class RegisterView extends Composite<VerticalLayout> {
             }
 		}
 	}
+	
+	
+	
     
 	private boolean isPasswordMatched(String password1, String password2) {
 		return password1.equals(password2);

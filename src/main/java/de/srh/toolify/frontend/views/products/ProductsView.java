@@ -33,6 +33,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.Product;
 import de.srh.toolify.frontend.data.ResponseData;
+import de.srh.toolify.frontend.utils.HelperUtil;
 
 public class ProductsView extends Main implements HasComponents, HasStyle{
 	
@@ -71,7 +72,7 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
 
         Select<String> sortBy = new Select<>();
         sortBy.setLabel("Filter");
-        List<String> sortItems = getAllCategories();
+        List<String> sortItems = HelperUtil.getAllCategories();
         sortItems.add(0, "All");
         sortBy.setItems(sortItems);
         sortBy.setValue("All");
@@ -100,16 +101,6 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
         container.add(sortBy);
         add(container, imageContainer);
     }
-    
-    private List<String> getAllCategories() {
-		RestClient client = new RestClient();
-		ResponseData resp = client.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
-		List<String> categories = new ArrayList<>();
-		for (JsonNode categoryNode : resp.getNode()) {
-			categories.add(categoryNode.get("categoryName").textValue());			
-		}
-		return categories;
-	}
     
     private void populateProducts(ResponseData data, OrderedList imageContainer) {
     	JsonNode node = data.getNode();

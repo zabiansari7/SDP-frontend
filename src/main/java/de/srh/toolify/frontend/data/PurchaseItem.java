@@ -5,12 +5,12 @@ import java.math.BigDecimal;
 public class PurchaseItem {
 	
 	private Long productId;
-	private int quantity;
+	private String quantity;
 	private BigDecimal purchasePrice;
 	private String productName;
 	private int requestedQuantity;
 	
-	public PurchaseItem(Long productId, int quantity, BigDecimal purchasePrice, String productName, int requestedQuantity) {
+	public PurchaseItem(Long productId, String quantity, BigDecimal purchasePrice, String productName, int requestedQuantity) {
 		this.productId = productId;
 		this.quantity = quantity;
 		this.purchasePrice = purchasePrice;
@@ -26,11 +26,11 @@ public class PurchaseItem {
 		this.productId = productId;
 	}
 
-	public int getQuantity() {
+	public String getQuantity() {
 		return quantity;
 	}
 	
-	public void setQuantity(int quantity) {
+	public void setQuantity(String quantity) {
 		this.quantity = quantity;
 	}
 	
