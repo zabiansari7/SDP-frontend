@@ -77,7 +77,10 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         StreamResource resource = new StreamResource("toolify_logo.jpeg", this::getImageStream);
         image.setSrc(resource);
         image.setAlt("logo");
-        image.addClickListener(e -> UI.getCurrent().navigate(HelloToolifyView.class));
+        image.addClickListener(e -> {
+            UI.getCurrent().navigate(HelloToolifyView.class);
+            div.getElement().executeJs("location.reload(true)");
+        });
         div.addClassName(Margin.MEDIUM);
         div.add(image);
 
@@ -96,27 +99,32 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         registerButton.setWidth("min-content");
         registerButton.setId("registerBtn");
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        registerButton.addClassName("clickable-button");
         registerButton.addClickListener(click -> UI.getCurrent().navigate("/register"));
         loginButton.setText("Log In");
         loginButton.setId("loginBtn");
         loginButton.setWidth("min-content");
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        loginButton.addClassName("clickable-button");
         loginButton.addClickListener(click -> UI.getCurrent().navigate("/login"));
         layoutRow.add(registerButton);
         layoutRow.add(loginButton);
         cartButton.setText("Cart");
         cartButton.setWidth("min-content");
         cartButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        cartButton.addClassName("clickable-button");
         cartButton.setId("cartBtn");
         cartButton.addClickListener(event -> UI.getCurrent().navigate("cart"));
         profileButton.setText("Profile");
         profileButton.setId("profileBtn");
         profileButton.setWidth("min-content");
+        profileButton.addClassName("clickable-button");
         profileButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         profileButton.addClickListener(e -> UI.getCurrent().navigate("profile"));
         logoutButton.setText("Logout");
         logoutButton.setId("logoutBtn");
         logoutButton.setWidth("min-content");
+        logoutButton.addClassName("clickable-button");
         logoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         logoutButton.addClickListener(e -> {
         	VaadinSession.getCurrent().setAttribute("token", "");        	

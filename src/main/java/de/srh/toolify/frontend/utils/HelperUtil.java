@@ -55,13 +55,22 @@ public class HelperUtil {
 	public static List<Category> getAllCategoriesAsClass() {
 		RestClient client = new RestClient();
 		ResponseData resp = client.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = HelperUtil.getObjectMapper();
 		List<Category> categories = new ArrayList<>();
 		for (JsonNode categoryNode : resp.getNode()) {
 			Category category = mapper.convertValue(categoryNode, Category.class);
 			categories.add(category);
 		}
 		return categories;
+	}
+
+	public static PurchaseHistory getPurchaseByInvoice(int invoice) {
+		RestClient client = new RestClient();
+		ObjectMapper mapper = HelperUtil.getObjectMapper();
+		ResponseData data =client.requestHttp("GET", "http://localhost:8080/private/purchase/history/" + invoice, null, null);
+		JsonNode purchaseNode = data.getNode();
+		PurchaseHistory purchaseHistory = mapper.convertValue(purchaseNode, PurchaseHistory.class);
+		return purchaseHistory;
 	}
 
 }

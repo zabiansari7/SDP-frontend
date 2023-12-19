@@ -167,12 +167,11 @@ public class RegisterView extends Composite<VerticalLayout> {
         defaultStreetNumber.addValueChangeListener(event -> {
             String newValue = event.getValue().replaceAll(",", "");
             defaultStreetNumber.setValue(newValue);
+        });
         defaultStreetNumber.setRequired(true);
         defaultStreetNumber.setPattern("\\d{0,3}");
         defaultStreetNumber.setMaxLength(3);
         //defaultStreetNumber.setWidth("min-content");
-        });
-        
         
        
         defaultPincode.setLabel("Pincode");
@@ -205,9 +204,11 @@ public class RegisterView extends Composite<VerticalLayout> {
         registerButton.setText("Register");
         registerButton.addClickListener(c -> onRegister(binder));
         registerButton.setWidth("min-content");
+        registerButton.addClassName("clickable-button");
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         alreadyMemberButton.setText("Already a member? Log In here");
         alreadyMemberButton.setWidth("min-content");
+        alreadyMemberButton.addClassName("clickable-button");
         alreadyMemberButton.addClickListener(c -> UI.getCurrent().navigate("/login"));
         getContent().add(layoutColumn2);
         layoutColumn2.add(h3);

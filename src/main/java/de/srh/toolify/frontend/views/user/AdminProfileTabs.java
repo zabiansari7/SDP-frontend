@@ -2,6 +2,9 @@ package de.srh.toolify.frontend.views.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.helger.commons.collection.ArrayHelper;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.xmp.XMPException;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -34,8 +37,10 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.*;
 import de.srh.toolify.frontend.utils.HelperUtil;
+import de.srh.toolify.frontend.utils.PDFGen;
 import de.srh.toolify.frontend.views.MainLayout;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -346,9 +351,15 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 		for (PurchaseHistory purchaseHistory : purchaseHistories) {
 			count++;
 			HorizontalLayout itemHorizontalLayout = createHorizontalLayout();
+            itemHorizontalLayout.setHeight("47px");
+            if (count%2 != 0) {
+                itemHorizontalLayout.getStyle().set("background-color","lightcyan");
+            } else {
+                itemHorizontalLayout.getStyle().set("background-color","whitesmoke");
+            }
 			itemHorizontalLayout.add(createLabel(String.valueOf(count)),
 					createLabel(purchaseHistory.getUser().getEmail()),
-					createLabel(String.valueOf(purchaseHistory.getDate())),
+					createLabel(String.valueOf(purchaseHistory.getDate()).replace("T", " Time:").replace("Z", " ")),
 					createLabel(String.valueOf(purchaseHistory.getInvoice())),
 					createButton(purchaseHistory.getInvoice()));
 			main.add(itemHorizontalLayout);
@@ -362,6 +373,12 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 		h.add(createHeader("SrNo."), createHeader("User Email"),createHeader("Purchase Date"), createHeader("Invoice Number"), createHeader("View Invoice"));
 		return h;
 	}
+
+    private HorizontalLayout headerManageCategoryLayout(VerticalLayout main) {
+        HorizontalLayout h = createHorizontalLayout();
+        h.add(createHeader("SrNo."), createHeader("Category"), createAddCategoryButton(main));
+        return h;
+    }
 
 	private HorizontalLayout headerManageProductsLayout(VerticalLayout mainLayout) {
 		HorizontalLayout h = createHorizontalLayout();
@@ -395,7 +412,7 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 		H4 label = new H4(text);
 		label.setWidth("20%");
 		label.setWidthFull();
-		addClassName(Padding.Left.MEDIUM);
+        label.addClassName(Padding.MEDIUM);
 		return label;
 	}
 	
@@ -404,6 +421,15 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 		button.getElement().setProperty("invoiceNo", invoiceNo);
 		button.setWidth("20%");
 		button.addClassName("clickable-button");
+        button.addClickListener(event -> {
+            PurchaseHistory purchaseHistory = HelperUtil.getPurchaseByInvoice(invoiceNo);
+            try {
+                PDFGen app = new PDFGen();
+                app.createPdf(purchaseHistory, "results/invoice_" + invoiceNo + ".pdf");
+            } catch (DocumentException | IOException | XMPException e) {
+                throw new RuntimeException(e);
+            }
+        });
 		return button;
 	}
 	
@@ -415,6 +441,7 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 	
 	private HorizontalLayout createEditDeleteLayout(Binder<Product> binderProduct, VerticalLayout mainLayout,Long productId) {
 		HorizontalLayout h = createHorizontalLayout();
+        h.setWidth("115%");
 		h.add(createEditButton(binderProduct, mainLayout, productId), createDeleteButton(mainLayout, productId));
 		return h;
 	}
@@ -442,11 +469,194 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 		button.addThemeVariants(ButtonVariant.LUMO_ERROR);
         button.addClickListener(e -> {
             deleteProductById(productId);
-            main.removeAll();
-            main.getElement().executeJs("location.reload(true)");
+            button.getElement().getParent().getParent().removeFromParent();
+            showNotification("Product Deleted successfully", NotificationVariant.LUMO_ERROR);
         });
 		return button;
 	}
+
+    private Button createAddCategoryButton(VerticalLayout mainLayout){
+        Button button = new Button("Add Category");
+        button.setWidth("20%");
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        button.addClassName("clickable-button");
+        button.addClickListener(event -> {
+            Dialog dialog = new Dialog();
+            dialog.getElement().setAttribute("aria-label", "Create new product");
+            mainLayout.add(dialog);
+            dialog.add(createAddCategoryDialog(dialog, mainLayout));
+            dialog.open();
+
+        });
+        return button;
+    }
+
+    private VerticalLayout createAddCategoryDialog(Dialog dialog, VerticalLayout mainLayout) {
+        VerticalLayout dialogVerticalLayout = new VerticalLayout();
+
+        dialogVerticalLayout.setWidth("100%");
+        dialogVerticalLayout.getStyle().set("flex-grow", "1");
+
+        HorizontalLayout layoutRow = new HorizontalLayout();
+        TextField categoryName = new TextField();
+        categoryName.setLabel("Category");
+        categoryName.setMaxLength(30);
+        categoryName.setRequired(true);
+        categoryName.setRequiredIndicatorVisible(true);
+
+        HorizontalLayout layoutRow2 = new HorizontalLayout();
+        Button saveButton = new Button();
+        saveButton.setText("Save");
+        saveButton.setWidth("min-content");
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button cancelButton = new Button();
+        cancelButton.setText("Cancel");
+        cancelButton.setWidth("min-content");
+        layoutRow.add(categoryName);
+        layoutRow2.add(saveButton, cancelButton);
+        dialogVerticalLayout.add(layoutRow, layoutRow2);
+
+        layoutRow.setWidthFull();
+        dialogVerticalLayout.setFlexGrow(1.0, layoutRow);
+        layoutRow.addClassName(Gap.MEDIUM);
+        layoutRow.setHeight("75px");
+        layoutRow.setAlignItems(Alignment.CENTER);
+        layoutRow.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        layoutRow2.setWidthFull();
+        dialogVerticalLayout.setFlexGrow(1.0, layoutRow2);
+        layoutRow2.addClassName(Gap.MEDIUM);
+        layoutRow2.setHeight("75px");
+        layoutRow2.setAlignItems(Alignment.CENTER);
+        layoutRow2.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        cancelButton.addClickListener(event -> {
+           dialog.close();
+        });
+
+        saveButton.addClickListener(event -> {
+            if (categoryName.getValue().isEmpty() || categoryName.getValue().isBlank()) {
+                showNotification("Empty Field Detected !", NotificationVariant.LUMO_ERROR);
+                return;
+            }
+            addCategory(categoryName.getValue());
+            showNotification("Category saved successfully", NotificationVariant.LUMO_SUCCESS);
+            dialog.close();
+            mainLayout.removeAll();
+            mainLayout.getElement().executeJs("location.reload(true)");
+
+        });
+
+        return dialogVerticalLayout;
+
+    }
+
+    private void addCategory(String name){
+        Category category = new Category();
+        category.setCategoryName(name);
+        RestClient client = new RestClient();
+        client.requestHttp("POST", "http://localhost:8080/private/admin/categories/category", category, Category.class);
+    }
+
+    private Button createEditCategoryButton(VerticalLayout main, Category category){
+        Button button = new Button("Edit");
+        button.setWidth("20%");
+        button.addClassName("clickable-button");
+        button.addClickListener(event -> {
+            Dialog dialog = new Dialog();
+            dialog.getElement().setAttribute("aria-label", "Edit Category");
+            main.add(dialog);
+            dialog.add(createEditCategoryDialog(dialog, main, category));
+            dialog.open();
+        });
+        return button;
+    }
+
+    private VerticalLayout createEditCategoryDialog(Dialog dialog, VerticalLayout mainLayout, Category category) {
+        VerticalLayout dialogVerticalLayout = new VerticalLayout();
+
+        dialogVerticalLayout.setWidth("100%");
+        dialogVerticalLayout.getStyle().set("flex-grow", "1");
+
+        HorizontalLayout layoutRow = new HorizontalLayout();
+        TextField categoryName = new TextField();
+        categoryName.setLabel("Category");
+        categoryName.setValue(category.getCategoryName());
+        categoryName.setMaxLength(30);
+        categoryName.setRequired(true);
+        categoryName.setRequiredIndicatorVisible(true);
+
+        HorizontalLayout layoutRow2 = new HorizontalLayout();
+        Button saveButton = new Button();
+        saveButton.setText("Save");
+        saveButton.setWidth("min-content");
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button cancelButton = new Button();
+        cancelButton.setText("Cancel");
+        cancelButton.setWidth("min-content");
+        layoutRow.add(categoryName);
+        layoutRow2.add(saveButton, cancelButton);
+        dialogVerticalLayout.add(layoutRow, layoutRow2);
+
+        layoutRow.setWidthFull();
+        dialogVerticalLayout.setFlexGrow(1.0, layoutRow);
+        layoutRow.addClassName(Gap.MEDIUM);
+        layoutRow.setHeight("75px");
+        layoutRow.setAlignItems(Alignment.CENTER);
+        layoutRow.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        layoutRow2.setWidthFull();
+        dialogVerticalLayout.setFlexGrow(1.0, layoutRow2);
+        layoutRow2.addClassName(Gap.MEDIUM);
+        layoutRow2.setHeight("75px");
+        layoutRow2.setAlignItems(Alignment.CENTER);
+        layoutRow2.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        cancelButton.addClickListener(event -> {
+            dialog.close();
+        });
+
+        saveButton.addClickListener(event -> {
+            if (categoryName.getValue().isEmpty() || categoryName.getValue().isBlank()) {
+                showNotification("Empty Field Detected !", NotificationVariant.LUMO_ERROR);
+                return;
+            }
+            editCategory(category.getCategoryId(), categoryName.getValue());
+            showNotification("Category updated successfully", NotificationVariant.LUMO_SUCCESS);
+            dialog.close();
+            mainLayout.removeAll();
+            mainLayout.getElement().executeJs("location.reload(true)");
+
+        });
+        return dialogVerticalLayout;
+    }
+
+    private void editCategory(Long categoryId, String categoryName){
+        CategoryForEdit category = new CategoryForEdit();
+        category.setCategoryName(categoryName);
+        RestClient client = new RestClient();
+        client.requestHttp("PUT", "http://localhost:8080/private/admin/categories/category/" + categoryId, category, CategoryForEdit.class);
+    }
+
+
+
+/*    private Button createDeleteCategoryButton(Long categoryId){
+        Button button = new Button("Delete");
+        button.setWidth("10%");
+        button.addClassName("clickable-button");
+        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        button.addClickListener(event -> {
+            deleteCategoryById(categoryId);
+            button.getElement().getParent().getParent().removeFromParent();
+            showNotification("Category deleted successfully", NotificationVariant.LUMO_ERROR);
+        });
+        return button;
+    }
+
+    private void deleteCategoryById(Long categoryId) {
+        RestClient client = new RestClient();
+        client.requestHttp("DELETE", "http://localhost:8080/private/admin/categories/category/" + categoryId, null, null);
+    }*/
 
     private void deleteProductById(Long productId) {
         RestClient client = new RestClient();
@@ -468,14 +678,20 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     		count++;
     		Product product = mapper.convertValue(productNode, Product.class);
 			
-			HorizontalLayout addressHorizontalLayout = createHorizontalLayout();
-			addressHorizontalLayout.add(
+			HorizontalLayout productHorizontalLayout = createHorizontalLayout();
+            productHorizontalLayout.setHeight("47px");
+            if (count%2 != 0) {
+                productHorizontalLayout.getStyle().set("background-color","lightcyan");
+            } else {
+                productHorizontalLayout.getStyle().set("background-color","whitesmoke");
+            }
+			productHorizontalLayout.add(
 					createLabel(String.valueOf(count)), 
 					createLabel(product.getName()), 
 					createLabel(String.valueOf(product.getQuantity())), 
 					createLabel("€" + String.valueOf(product.getPrice())),
 					createEditDeleteLayout(binderProduct, main, product.getProductId()));
-					main.add(addressHorizontalLayout);
+					main.add(productHorizontalLayout);
     	}
         return main;
 	}
@@ -602,7 +818,6 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         cancelButton.setText("Cancel");
         cancelButton.setWidth("min-content");
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         cancelButton.addClickListener(e -> {
         	dialog.close();
         });
@@ -689,8 +904,29 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 
     private VerticalLayout getManageCategoryLayout() {
         VerticalLayout main = new VerticalLayout();
+        main.setWidth("50%");
 
-        return new VerticalLayout();
+        HorizontalLayout labelHorizontalLayout = headerManageCategoryLayout(main);
+        labelHorizontalLayout.setWidthFull();
+        main.add(labelHorizontalLayout);
+
+        List<Category> categories = HelperUtil.getAllCategoriesAsClass();
+
+        int count = 0;
+        for (Category category : categories) {
+            count++;
+            HorizontalLayout hz = createHorizontalLayout();
+            hz.setHeight("47px");
+            if (count%2 != 0) {
+                hz.getStyle().set("background-color","lightcyan");
+            } else {
+                hz.getStyle().set("background-color","whitesmoke");
+            }
+            hz.add(createLabel(String.valueOf(count)), createLabel(category.getCategoryName()), createEditCategoryButton(main, category));
+            main.add(hz);
+        }
+
+        return main;
     }
 
     private VerticalLayout createEditProductDialog(Binder<Product> binderProduct, Long productId,  Dialog dialog, VerticalLayout main) {
@@ -736,6 +972,10 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
         price.setPattern("\\d+(\\.\\d{2})?");
         price.setMaxLength(8);
         price.setRequired(true);
+        price.addValueChangeListener(event -> {
+            String newValue = event.getValue().replaceAll(",", "");
+            price.setValue(newValue);
+        });
         //price.setWidth("180px");
         layoutRow2.setWidthFull();
         dialogVerticalLayout.setFlexGrow(1.0, layoutRow2);
@@ -794,7 +1034,6 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
         image.setRequiredIndicatorVisible(true);
         image.setRequired(true);
         //image.setWidth("180px");
-        category = new Select<>();
         category.setLabel("Category");
         category.setRequiredIndicatorVisible(true);
         //category.setPlaceholder(product.getCategory().getCategoryName());
@@ -885,7 +1124,7 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     private JsonNode editProduct(Long productId) {
         System.out.println(binderProduct.getBean().toString());
         RestClient client = new RestClient();
-        ResponseData date = client.requestHttp("PUT", "http://localhost:8080/private/admin/products/product/" + binderProduct.getBean().getProductId(), binderProduct.getBean(), ProductForEdit.class);
+        ResponseData date = client.requestHttp("PUT", "http://localhost:8080/private/admin/products/product/" + productId, binderProduct.getBean(), ProductForEdit.class);
         return date.getNode();
     }
 

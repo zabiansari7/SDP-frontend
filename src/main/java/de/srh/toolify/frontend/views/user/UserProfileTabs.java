@@ -1,6 +1,7 @@
 package de.srh.toolify.frontend.views.user;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -8,6 +9,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.xmp.XMPException;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -48,6 +51,7 @@ import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.data.User;
 import de.srh.toolify.frontend.data.UserForAddress;
 import de.srh.toolify.frontend.utils.HelperUtil;
+import de.srh.toolify.frontend.utils.PDFGen;
 import de.srh.toolify.frontend.views.MainLayout;
 
 @PageTitle("Profile | Toolify")
@@ -295,9 +299,15 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     	for (PurchaseHistory purchaseHistory : purchaseHistories) {
     		count++;
 			HorizontalLayout itemHorizontalLayout = createHorizontalLayout();
+            itemHorizontalLayout.setHeight("47px");
+            if (count%2 != 0) {
+                itemHorizontalLayout.getStyle().set("background-color","lightcyan");
+            } else {
+                itemHorizontalLayout.getStyle().set("background-color","whitesmoke");
+            }
 			itemHorizontalLayout.add(createLabel(String.valueOf(count)), 
 					createLabel(String.valueOf(purchaseHistory.getInvoice())), 
-					createLabel(String.valueOf(purchaseHistory.getDate())), 
+					createLabel(String.valueOf(purchaseHistory.getDate()).replace("T"," Time:").replace("Z", " ")),
 					createLabel(String.valueOf("€" + purchaseHistory.getTotalPrice())),
 					createDownloadInvoiceButton(purchaseHistory.getInvoice()));
 			main.add(itemHorizontalLayout);
@@ -320,6 +330,12 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
 			Address address = mapper.convertValue(addressNode, Address.class);
 			
 			HorizontalLayout addressHorizontalLayout = createHorizontalLayout();
+            addressHorizontalLayout.setHeight("47px");
+            if (count%2 != 0) {
+                addressHorizontalLayout.getStyle().set("background-color","lightcyan");
+            } else {
+                addressHorizontalLayout.getStyle().set("background-color","whitesmoke");
+            }
 			addressHorizontalLayout.add(
 					createLabel(String.valueOf(count)), 
 					createLabel(address.getStreetName()), 
@@ -370,6 +386,7 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
 
 	private H4 createLabel(String text) {
 		H4 label = new H4(text);
+        label.addClassName(Padding.MEDIUM);
 		label.setWidth("20%");
 		label.setWidthFull();
 		addClassName(Padding.Left.MEDIUM);
@@ -400,6 +417,15 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
 		button.getElement().setProperty("invoiceNo", invoiceNo);
 		button.setWidth("20%");
 		button.addClassName("clickable-button");
+        button.addClickListener(event -> {
+            PurchaseHistory purchaseHistory = HelperUtil.getPurchaseByInvoice(invoiceNo);
+            try {
+                PDFGen app = new PDFGen();
+                app.createPdf(purchaseHistory, "results/invoice_" + invoiceNo + ".pdf");
+            } catch (DocumentException | IOException | XMPException e) {
+                throw new RuntimeException(e);
+            }
+        });
 		return button;
 	}
 	
