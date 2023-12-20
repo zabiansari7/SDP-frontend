@@ -17,8 +17,8 @@ public class User {
     @JsonIgnore
     private String hasRole;
     private String defaultStreetName;
-    private Long defaultStreetNumber;
-    private Long defaultPincode;
+    private String defaultStreetNumber;
+    private String defaultPincode;
     private String defaultCity;
     @JsonIgnore
     private Instant createdOn;
@@ -92,19 +92,19 @@ public class User {
 		this.defaultStreetName = defaultStreetName;
 	}
 	
-	public Long getDefaultStreetNumber() {
+	public String getDefaultStreetNumber() {
 		return defaultStreetNumber;
 	}
 	
-	public void setDefaultStreetNumber(Long defaultStreetNumber) {
+	public void setDefaultStreetNumber(String defaultStreetNumber) {
 		this.defaultStreetNumber = defaultStreetNumber;
 	}
 	
-	public Long getDefaultPincode() {
+	public String getDefaultPincode() {
 		return defaultPincode;
 	}
 	
-	public void setDefaultPincode(Long defaultPincode) {
+	public void setDefaultPincode(String defaultPincode) {
 		this.defaultPincode = defaultPincode;
 	}
 	
@@ -138,6 +138,11 @@ public class User {
 
 	public void setUpdatedOn(Instant updatedOn) {
 		this.updatedOn = updatedOn;
+	}
+
+	@JsonIgnore
+	public String getFullName(){
+		return this.getFirstname() + " " + this.getLastname();
 	}
 
 	@Override

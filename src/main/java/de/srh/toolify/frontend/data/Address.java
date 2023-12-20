@@ -5,7 +5,6 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Address {
-	@JsonIgnore
 	private Long addressID;
 	private String streetName;
 	private int streetNumber;
@@ -90,5 +89,14 @@ public class Address {
 
 	public void setUpdatedOn(Instant updatedOn) {
 		this.updatedOn = updatedOn;
-	} 
+	}
+
+	@JsonIgnore
+	public String getAddressLineOne(){
+		return this.getStreetName() + "-" + this.getStreetNumber();
+	}
+	@JsonIgnore
+	public String getAddressLineTwo(){
+		return this.getPostCode() + " - " + this.getCityName();
+	}
 }

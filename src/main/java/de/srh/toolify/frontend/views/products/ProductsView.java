@@ -1,11 +1,5 @@
 package de.srh.toolify.frontend.views.products;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -19,21 +13,15 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
-import com.vaadin.flow.theme.lumo.LumoUtility.Display;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontSize;
-import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
-import com.vaadin.flow.theme.lumo.LumoUtility.JustifyContent;
-import com.vaadin.flow.theme.lumo.LumoUtility.ListStyleType;
-import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
-import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
-import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
-import com.vaadin.flow.theme.lumo.LumoUtility.Width;
-
+import com.vaadin.flow.theme.lumo.LumoUtility.*;
 import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.Product;
 import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.utils.HelperUtil;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ProductsView extends Main implements HasComponents, HasStyle{
 	
@@ -77,19 +65,14 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
         sortBy.setItems(sortItems);
         sortBy.setValue("All");
         sortBy.addValueChangeListener(e -> {
-        	RestClient restClient = new RestClient();
-        	String encodedParam = null;
+        	String encodedParam;
         	ResponseData resp;
         	if (sortBy.getValue().equals("All")) {
-        		resp = restClient.requestHttp("GET", "http://localhost:8080/public/products/all", null, null);
+        		resp = RestClient.requestHttp("GET", "http://localhost:8080/public/products/all", null, null);
         		populateProducts(resp, imageContainer);
 			} else {
-				try {
-					encodedParam = URLEncoder.encode(sortBy.getValue(), StandardCharsets.UTF_8.toString());
-				} catch (UnsupportedEncodingException ex) {
-					ex.printStackTrace();
-				}
-				resp = restClient.requestHttp("GET", "http://localhost:8080/private/admin/products/product?categoryName=" + encodedParam, null, null);
+                encodedParam = URLEncoder.encode(sortBy.getValue(), StandardCharsets.UTF_8);
+                resp = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/products/product?categoryName=" + encodedParam, null, null);
 				populateProducts(resp, imageContainer);
 			}
         });

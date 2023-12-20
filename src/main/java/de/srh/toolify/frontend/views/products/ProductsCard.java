@@ -88,14 +88,11 @@ public class ProductsCard extends ListItem{
 			notification.setPosition(Position.TOP_CENTER);
 			notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
         });
-        
         add(div, headerButton, subtitle, productDescription, badge);
-
     }
 	
 	private PurchaseItem prepareCartItem(Long productId) {
-		RestClient client = new RestClient();
-		ResponseData data = client.requestHttp("GET", "http://localhost:8080/public/products/product/" + productId, null, null);		
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/public/products/product/" + productId, null, null);
 		JsonNode productNode = data.getNode();
 		ObjectMapper mapper = new ObjectMapper();
 		Product product = mapper.convertValue(productNode, Product.class);

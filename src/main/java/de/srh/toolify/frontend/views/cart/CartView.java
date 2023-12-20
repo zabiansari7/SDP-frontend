@@ -3,6 +3,7 @@ package de.srh.toolify.frontend.views.cart;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.UI;
@@ -12,6 +13,8 @@ import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
@@ -23,6 +26,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 
 import de.srh.toolify.frontend.data.PurchaseItem;
+import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.views.MainLayout;
 import jakarta.annotation.security.PermitAll;
 
@@ -74,7 +78,6 @@ public class CartView extends Composite<VerticalLayout> {
 		checkoutButton.setText("Proceed to Checkout Page");
 		checkoutButton.setWidth("300px");
 		checkoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-		checkoutButton.addClickListener(event -> UI.getCurrent().navigate("checkout"));
 
 		headerLayout.add(createHeader("SrNo."), createHeader("Product"), createHeader("Quantity"),
 				createHeader("Price"));
@@ -91,7 +94,6 @@ public class CartView extends Composite<VerticalLayout> {
 		getContent().add(headerLayout);
 		
 		List<PurchaseItem> carts = CartService.getInstance().getCartItems();
-		
 
 		
 		int count = 1;
@@ -107,12 +109,18 @@ public class CartView extends Composite<VerticalLayout> {
 			count++;
 			getContent().add(itemLayout);
 		}
+		checkoutButton.addClickListener(event -> {
+			if (carts.isEmpty() || Objects.equals(totalPriceLabel.getElement().getText(), "€0.00")) {
+				HelperUtil.showNotification("Cannot proceed to checkout if Cart is empty", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+				return;
+			}
+			UI.getCurrent().navigate("checkout");
+		});
+
 		getContent().add(layoutColumn3);
 		if (this.getTotalPrice() != null) {
 			totalPriceLabel.setText("€" + this.getTotalPrice().toString());
 		}
-		
-		
 	}
 
 	private H3 createHeader(String text) {

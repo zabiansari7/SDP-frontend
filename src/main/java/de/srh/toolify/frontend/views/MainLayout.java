@@ -2,6 +2,7 @@ package de.srh.toolify.frontend.views;
 
 
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -14,7 +15,6 @@ import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.server.StreamResource;
@@ -33,7 +33,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
-import de.srh.toolify.frontend.views.helloworld.HelloToolifyView;
+import de.srh.toolify.frontend.views.home.HomeView;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -48,7 +48,6 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     Button cartButton = new Button();
     Button profileButton = new Button();
     Button logoutButton = new Button();
-    VerticalLayout layoutColumn2 = new VerticalLayout();
 
 
     public MainLayout() {
@@ -78,8 +77,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         image.setSrc(resource);
         image.setAlt("logo");
         image.addClickListener(e -> {
-            UI.getCurrent().navigate(HelloToolifyView.class);
-            div.getElement().executeJs("location.reload(true)");
+            UI.getCurrent().navigate(HomeView.class);
         });
         div.addClassName(Margin.MEDIUM);
         div.add(image);
@@ -87,7 +85,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         H1 appName = new H1("Toolify Shop");
         appName.addClassNames(Margin.Vertical.MEDIUM, Margin.End.AUTO, FontSize.LARGE);
         appName.addClickListener(click -> {
-        	UI.getCurrent().navigate(HelloToolifyView.class);
+        	UI.getCurrent().navigate(HomeView.class);
         	System.out.println(UI.getCurrent().getElement().getChildCount());
         });
         
@@ -128,7 +126,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         logoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         logoutButton.addClickListener(e -> {
         	VaadinSession.getCurrent().setAttribute("token", "");        	
-        	VaadinSession.getCurrent().setAttribute("cartItems", null);
+        	VaadinSession.getCurrent().setAttribute("cartItems", new ArrayList<>());
         	VaadinSession.getCurrent().setAttribute("user", null);
 			layoutRow.remove(cartButton, profileButton, logoutButton);
 			layoutRow.add(loginButton, registerButton);

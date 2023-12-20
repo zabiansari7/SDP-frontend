@@ -1,6 +1,7 @@
-package de.srh.toolify.frontend.views.user;
+package de.srh.toolify.frontend.error;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.Uses;
@@ -14,14 +15,15 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.home.HomeView;
 
-@PageTitle("Errorview")
-@Route(value = "/error", layout = MainLayout.class)
+@PageTitle("Internal Error | Toolify")
+@Route(value = "internalerror", layout = MainLayout.class)
 @AnonymousAllowed
 @Uses(Icon.class)
-public class ErrorView extends Composite<VerticalLayout> {
+public class InternalErrorView extends Composite<VerticalLayout> {
 
-    public ErrorView() {
+    public InternalErrorView() {
         VerticalLayout layoutColumn2 = new VerticalLayout();
         H2 h2 = new H2();
         Button buttonPrimary = new Button();
@@ -34,6 +36,7 @@ public class ErrorView extends Composite<VerticalLayout> {
         h2.setText("Sorry! Something went wrong :(");
         h2.setWidth("max-content");
         buttonPrimary.setText("Back to Home");
+        buttonPrimary.addClickListener(e -> UI.getCurrent().navigate(HomeView.class));
         buttonPrimary.setWidth("min-content");
         buttonPrimary.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         getContent().add(layoutColumn2);

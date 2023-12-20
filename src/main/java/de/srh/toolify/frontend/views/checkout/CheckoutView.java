@@ -1,12 +1,12 @@
 package de.srh.toolify.frontend.views.checkout;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +27,8 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
@@ -39,6 +41,7 @@ import de.srh.toolify.frontend.data.PurchaseItem;
 import de.srh.toolify.frontend.data.CheckoutRequest;
 import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.data.User;
+import de.srh.toolify.frontend.error.InternalErrorView;
 import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.views.MainLayout;
 import jakarta.annotation.security.PermitAll;
@@ -47,7 +50,7 @@ import jakarta.annotation.security.PermitAll;
 @Route(value = "checkout", layout = MainLayout.class)
 @PermitAll
 @Uses(Icon.class)
-public class CheckoutView extends Composite<VerticalLayout> {
+public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnterObserver {
 	
 	private static final long serialVersionUID = 8130844063643921264L;
 
@@ -166,16 +169,11 @@ public class CheckoutView extends Composite<VerticalLayout> {
         defaultStreetNumber.setReadOnly(true);
         defaultPincode.setReadOnly(true);
         defaultCity.setReadOnly(true);
-        
-        RestClient client = new RestClient();
+
         String email = HelperUtil.getEmailFromSession();
         String encodedEmail = null;
-        try {
-			encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8.toString());
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-        ResponseData data = client.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null);
+        encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null);
         ObjectMapper mapper = new ObjectMapper();
         User user = mapper.convertValue(data.getNode(), User.class);
         
@@ -186,7 +184,7 @@ public class CheckoutView extends Composite<VerticalLayout> {
         defaultPincode.setValue(String.valueOf(user.getDefaultPincode()));
         defaultCity.setValue(user.getDefaultCity());
         
-        JsonNode addressesNode = getAddresses(client, encodedEmail);
+        JsonNode addressesNode = getAddresses(encodedEmail);
         System.out.println(addressesNode);
         
         ObjectMapper addressObjectMapper = new ObjectMapper();
@@ -274,7 +272,7 @@ public class CheckoutView extends Composite<VerticalLayout> {
 			}
             
             purchaseRequest.setPurchaseItems(checkoutPurchaseItems);
-        	ResponseData responseData = client.requestHttp("POST", "http://localhost:8080/private/purchase/product", purchaseRequest, CheckoutRequest.class);
+        	ResponseData responseData = RestClient.requestHttp("POST", "http://localhost:8080/private/purchase/product", purchaseRequest, CheckoutRequest.class);
         	JsonNode responseNode = responseData.getNode();
         	int code = 0;
         	try {
@@ -282,15 +280,14 @@ public class CheckoutView extends Composite<VerticalLayout> {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-        	
         	if (code == 201) {
         		UI.getCurrent().navigate("orderplaced");
 			}
         });
     }
     
-    private JsonNode getAddresses(RestClient client, String email) {
-		ResponseData data = client.requestHttp("GET", "http://localhost:8080/private/addresses?email=" + email, null, null);
+    private JsonNode getAddresses(String email) {
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/addresses?email=" + email, null, null);
 		return data.getNode();
     }
     
@@ -350,5 +347,11 @@ public class CheckoutView extends Composite<VerticalLayout> {
 	public void setTotalPrice(BigDecimal totalPrice) {
 		this.totalPrice = totalPrice;
 	}
-	
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        if (Objects.equals(h3.getText(), "Total Price €0")) {
+            event.rerouteTo(InternalErrorView.class);
+        }
+    }
 }

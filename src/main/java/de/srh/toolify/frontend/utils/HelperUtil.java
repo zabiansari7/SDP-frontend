@@ -1,5 +1,6 @@
 package de.srh.toolify.frontend.utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.srh.toolify.frontend.client.RestClient;
@@ -21,6 +24,14 @@ public class HelperUtil {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
 		return mapper;
+	}
+
+	public static void showNotification(String text, NotificationVariant variant, Notification.Position position) {
+		Notification notification = Notification
+				.show(text);
+		notification.setDuration(5000);
+		notification.setPosition(position);
+		notification.addThemeVariants(variant);
 	}
 	
 	public static String getEmailFromSession() {
@@ -43,8 +54,7 @@ public class HelperUtil {
     }
 	
 	public static List<String> getAllCategories() {
-		RestClient client = new RestClient();
-		ResponseData resp = client.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
+		ResponseData resp = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
 		List<String> categories = new ArrayList<>();
 		for (JsonNode categoryNode : resp.getNode()) {
 			categories.add(categoryNode.get("categoryName").textValue());
@@ -53,8 +63,7 @@ public class HelperUtil {
 	}
 
 	public static List<Category> getAllCategoriesAsClass() {
-		RestClient client = new RestClient();
-		ResponseData resp = client.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
+		ResponseData resp = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
 		ObjectMapper mapper = HelperUtil.getObjectMapper();
 		List<Category> categories = new ArrayList<>();
 		for (JsonNode categoryNode : resp.getNode()) {
@@ -65,12 +74,22 @@ public class HelperUtil {
 	}
 
 	public static PurchaseHistory getPurchaseByInvoice(int invoice) {
-		RestClient client = new RestClient();
 		ObjectMapper mapper = HelperUtil.getObjectMapper();
-		ResponseData data =client.requestHttp("GET", "http://localhost:8080/private/purchase/history/" + invoice, null, null);
-		JsonNode purchaseNode = data.getNode();
-		PurchaseHistory purchaseHistory = mapper.convertValue(purchaseNode, PurchaseHistory.class);
-		return purchaseHistory;
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/purchase/history/" + invoice, null, null);
+		try {
+			if (data.getConnection().getResponseCode() != 200) {
+				HelperUtil.showNotification("Error occurred while downloading invoice", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+				//throw new RuntimeException("Error occurred while downloading invoice");
+			} else {
+				JsonNode purchaseNode = data.getNode();
+				PurchaseHistory purchaseHistory = mapper.convertValue(purchaseNode, PurchaseHistory.class);
+				return purchaseHistory;
+			}
+		} catch (IOException e) {
+			HelperUtil.showNotification("Error occurred while downloading invoice", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			throw new RuntimeException(e);
+		}
+		return null;
 	}
 
 }

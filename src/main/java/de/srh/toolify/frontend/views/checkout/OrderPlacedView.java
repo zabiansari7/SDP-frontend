@@ -1,4 +1,4 @@
-package de.srh.toolify.frontend.views.user;
+package de.srh.toolify.frontend.views.checkout;
 
 import java.util.ArrayList;
 
@@ -23,9 +23,10 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.login.LoginView;
 import jakarta.annotation.security.PermitAll;
 
-@PageTitle("Order Placed")
+@PageTitle("Thank You | Toolify")
 @Route(value = "orderplaced", layout = MainLayout.class)
 @PermitAll
 @Uses(Icon.class)
@@ -33,7 +34,7 @@ public class OrderPlacedView extends Composite<VerticalLayout> implements Before
 
     private static final long serialVersionUID = 5782234946531038173L;
 
-	public OrderPlacedView() {
+    public OrderPlacedView() {
         VerticalLayout layoutColumn2 = new VerticalLayout();
         HorizontalLayout layoutRow = new HorizontalLayout();
         H2 h2 = new H2();
@@ -68,8 +69,13 @@ public class OrderPlacedView extends Composite<VerticalLayout> implements Before
         layoutColumn2.add(buttonPrimary);
     }
 
-	@Override
-	public void beforeEnter(BeforeEnterEvent event) {
-		VaadinSession.getCurrent().setAttribute("cartItems", new ArrayList<>());
-	}
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+/*        if (AuthenticationManagerUtil.isAuthenticated(event) == false) {
+            event.forwardTo(LoginView.class);
+            return;
+        }
+        VaadinSession.getCurrent().setAttribute("cartItems", new ArrayList<>());
+    }*/
+    }
 }

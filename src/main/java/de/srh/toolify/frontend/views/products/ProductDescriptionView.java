@@ -139,8 +139,7 @@ public class ProductDescriptionView extends Composite<VerticalLayout> implements
 
 	
 	private void updateUI(Long productId) {
-		RestClient client = new RestClient();
-		ResponseData data = client.requestHttp("GET", "http://localhost:8080/public/products/product/" + productId,	null, null);
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/public/products/product/" + productId,	null, null);
 
 		JsonNode productNode = data.getNode();
 		String imageUrl = productNode.get("image").textValue();
@@ -148,9 +147,8 @@ public class ProductDescriptionView extends Composite<VerticalLayout> implements
 		title.setText(productNode.get("name").textValue());
 		price.setText("€ " + productNode.get("price").toString());
 		description.setText(productNode.get("description").textValue());
-		
-		client = new RestClient();
-		data = client.requestHttp("GET", "http://localhost:8080/public/products/product/"+ productId +"/quantity", null, null);
+
+		data = RestClient.requestHttp("GET", "http://localhost:8080/public/products/product/"+ productId +"/quantity", null, null);
 		String maxQuantityNode = data.getNode().get("message").textValue();
 		quantity.setMax(Integer.valueOf(maxQuantityNode));
 		addToCartButton.addClassName("clickable-button");
