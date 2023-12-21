@@ -13,6 +13,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -33,6 +35,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
+import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.views.home.HomeView;
 
 /**
@@ -130,13 +133,11 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         	VaadinSession.getCurrent().setAttribute("user", null);
 			layoutRow.remove(cartButton, profileButton, logoutButton);
 			layoutRow.add(loginButton, registerButton);
+            HelperUtil.showNotification("Logout Successful", NotificationVariant.LUMO_SUCCESS, Notification.Position.TOP_CENTER);
 			UI.getCurrent().navigate("home");
         });
         layoutRow.setJustifyContentMode(JustifyContentMode.END);
-        
-
         layout.add(div, layoutRow);
-
         //header.add(layout, nav); //Hide Default Menu Items
         header.add(layout);
         return header;

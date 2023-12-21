@@ -31,6 +31,7 @@ import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.Product;
 import de.srh.toolify.frontend.data.PurchaseItem;
 import de.srh.toolify.frontend.data.ResponseData;
+import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.views.cart.CartService;
 import de.srh.toolify.frontend.views.cart.CartView;
 
@@ -82,11 +83,13 @@ public class ProductsCard extends ListItem{
         badge.addClassName("clickable-button");
         badge.setText("Add to Cart"); 
         badge.addClickListener(c -> {
-        	CartService.getInstance().addToCart(prepareCartItem(productId));
-        	Notification notification = Notification.show(String.format("Product '%s' added to cart", title));
-        	notification.setDuration(5000);
-			notification.setPosition(Position.TOP_CENTER);
-			notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+            try {
+                HelperUtil.getEmailFromSession();
+                CartService.getInstance().addToCart(prepareCartItem(productId));
+                HelperUtil.showNotification(String.format("Product '%s' added to cart", title), NotificationVariant.LUMO_CONTRAST, Position.TOP_CENTER);
+            } catch (Exception e) {
+                HelperUtil.showNotification("Please Login to add Products to Cart", NotificationVariant.LUMO_WARNING, Position.TOP_CENTER);
+            }
         });
         add(div, headerButton, subtitle, productDescription, badge);
     }

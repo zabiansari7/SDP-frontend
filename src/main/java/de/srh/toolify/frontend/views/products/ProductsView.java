@@ -10,15 +10,19 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.OrderedList;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.theme.lumo.LumoUtility.*;
 import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.Product;
+import de.srh.toolify.frontend.data.PurchaseHistory;
 import de.srh.toolify.frontend.data.ResponseData;
 import de.srh.toolify.frontend.utils.HelperUtil;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -66,14 +70,23 @@ public class ProductsView extends Main implements HasComponents, HasStyle{
         sortBy.setValue("All");
         sortBy.addValueChangeListener(e -> {
         	String encodedParam;
-        	ResponseData resp;
+        	ResponseData data;
         	if (sortBy.getValue().equals("All")) {
-        		resp = RestClient.requestHttp("GET", "http://localhost:8080/public/products/all", null, null);
-        		populateProducts(resp, imageContainer);
+        		data = HelperUtil.getAllProducts();
+        		populateProducts(data, imageContainer);
 			} else {
                 encodedParam = URLEncoder.encode(sortBy.getValue(), StandardCharsets.UTF_8);
-                resp = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/products/product?categoryName=" + encodedParam, null, null);
-				populateProducts(resp, imageContainer);
+                data = RestClient.requestHttp("GET", "http://localhost:8080/public/products/product?categoryName=" + encodedParam, null, null);
+                try {
+                    if (data.getConnection().getResponseCode() != 200) {
+                        HelperUtil.showNotification("Error occurred while downloading invoice", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+                    } else {
+                        populateProducts(data, imageContainer);
+                    }
+                } catch (IOException ex) {
+                    HelperUtil.showNotification("Error occurred while downloading invoice", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+                    throw new RuntimeException(ex);
+                }
 			}
         });
 

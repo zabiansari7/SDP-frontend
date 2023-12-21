@@ -1,10 +1,12 @@
 package de.srh.toolify.frontend.views.login;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import de.srh.toolify.frontend.error.AlreadyLoggedInView;
+import de.srh.toolify.frontend.utils.HelperUtil;
 import org.springframework.http.HttpHeaders;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -115,16 +117,13 @@ public class LoginView extends Composite<VerticalLayout> implements BeforeEnterO
 			if (resp.getConnection().getResponseCode() == 202) {
 				
 			    // Authentication successful, store the token in the Vaadin session
-			    String token = resp.getConnection().getHeaderField(HttpHeaders.AUTHORIZATION).substring(7);
+			    String token = resp.getConnection().getHeaderField(HttpHeaders.AUTHORIZATION);
 			    VaadinSession.getCurrent().setAttribute("token", token);
 			    VaadinSession.getCurrent().setAttribute("user", resp.getNode());
-			    VaadinSession.getCurrent().setAttribute("cartItems", null);
-			    
-			    Notification notification = Notification.show("Login successful");
-				notification.setDuration(5000);
-				notification.setPosition(Position.TOP_CENTER);
-				notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-				
+			    VaadinSession.getCurrent().setAttribute("cartItems", new ArrayList<>());
+
+                HelperUtil.showNotification("Login Successful", NotificationVariant.LUMO_SUCCESS, Position.TOP_CENTER);
+
 			    // Navigate to the secured part of your Vaadin application
 				JsonNode userNode = (JsonNode) VaadinSession.getCurrent().getAttribute("user");
 				String hasRole = userNode.get("hasRole").textValue();
@@ -136,21 +135,22 @@ public class LoginView extends Composite<VerticalLayout> implements BeforeEnterO
 			    
 			} else {
 			    // Authentication failed, show an error message
-				Notification notification = Notification.show("Login failed. Please try with correct email and password.");
-				notification.setDuration(5000);
-				notification.setPosition(Position.TOP_CENTER);
-				notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-			}
+                HelperUtil.showNotification("Login failed. Please try with correct email and password", NotificationVariant.LUMO_ERROR, Position.TOP_CENTER);
+            }
 		} catch (IOException e) {
+            HelperUtil.showNotification("Login failed. Please try with correct email and password", NotificationVariant.LUMO_ERROR, Position.TOP_CENTER);
 			e.printStackTrace();
+            throw new RuntimeException("Login failed.");
 		}
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        /*if (VaadinSession.getCurrent().getAttribute("token") != null || VaadinSession.getCurrent().getAttribute("token") != ""){
+        try {
+            HelperUtil.getEmailFromSession();
             event.rerouteTo(AlreadyLoggedInView.class);
-            return;
-        }*/
+        } catch (Exception e) {
+            UI.getCurrent();
+        }
     }
 }

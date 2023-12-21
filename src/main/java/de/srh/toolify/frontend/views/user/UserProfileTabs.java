@@ -29,8 +29,11 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import de.srh.toolify.frontend.client.RestClient;
@@ -38,9 +41,9 @@ import de.srh.toolify.frontend.data.*;
 import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.utils.PDFGen;
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.login.LoginView;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -48,7 +51,7 @@ import java.util.List;
 @PageTitle("Profile | Toolify")
 @Route(value = "profile", layout = MainLayout.class)
 @Uses(Icon.class)
-public class UserProfileTabs extends Composite<VerticalLayout> {
+public class UserProfileTabs extends Composite<VerticalLayout> implements BeforeEnterObserver {
 
     private static final long serialVersionUID = 1L;
 
@@ -68,7 +71,6 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     Button userDetailsEditButton = new Button();
     Button userDetailsSaveButton = new Button();
     Button userDetailsCancelButton = new Button();
-    String emailFromSession = HelperUtil.getEmailFromSession();
 
     private boolean valuesMatches;
 
@@ -97,8 +99,6 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     }
 
     private VerticalLayout getUserDetailsLayout(Binder<User> binder) {
-
-
         getContent().setWidth("100%");
         getContent().getStyle().set("flex-grow", "1");
         getContent().setJustifyContentMode(JustifyContentMode.START);
@@ -214,23 +214,19 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
 
         userDetailsSaveButton.addClickListener(e -> {
             if (binder.validate().isOk() == false) {
-                showNotification("Please correct your input", NotificationVariant.LUMO_ERROR);
+                HelperUtil.showNotification("Please correct your input", NotificationVariant.LUMO_ERROR, Position.TOP_CENTER);
                 return;
             }
 
             if (binder.getFields().anyMatch(a -> a.isEmpty())) {
-                showNotification("Empty fields detected !", NotificationVariant.LUMO_ERROR);
+                HelperUtil.showNotification("Empty fields detected !", NotificationVariant.LUMO_ERROR, Position.TOP_CENTER);
                 return;
-            }
-            String encodedEmail = null;
-            try {
-                encodedEmail = URLEncoder.encode(emailFromSession, StandardCharsets.UTF_8.toString());
-            } catch (UnsupportedEncodingException ex) {
-                ex.printStackTrace();
             }
 
             EditUser editUser = prepareEditUser();
-            ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/user?email=" + encodedEmail, editUser, EditUser.class);
+            String encodedEmail = URLEncoder.encode(HelperUtil.getEmailFromSession(), StandardCharsets.UTF_8);
+            String token = (String) VaadinSession.getCurrent().getAttribute("token");
+            ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/user?email=" + encodedEmail, editUser, EditUser.class, token);
             try {
                 if (data.getConnection().getResponseCode() ==  201) {
                     userDetailsHorizontalLayout.removeAll();
@@ -244,10 +240,7 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
                 HelperUtil.showNotification("Error occurred while updating the User !!", NotificationVariant.LUMO_ERROR, Position.TOP_CENTER);
                 throw new RuntimeException(ex);
             }
-
-
         });
-
         return userDetailsMain;
     }
 
@@ -316,9 +309,16 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     }
 
     private User getUserByEmail() {
-        String encodedEmail = null;
-        encodedEmail = URLEncoder.encode(emailFromSession, StandardCharsets.UTF_8);
-        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null);
+        String email;
+        try {
+            email = HelperUtil.getEmailFromSession();
+        } catch (Exception e) {
+            UI.getCurrent().navigate(LoginView.class);
+            return new User();
+        }
+        String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null, token);
         try {
             if (data.getConnection().getResponseCode() != 200) {
                 HelperUtil.showNotification("Error occurred while processing user information", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -452,9 +452,16 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     }
 
     private JsonNode prepareOrderContent() {
-        String encodedEmail = null;
-        encodedEmail = URLEncoder.encode(emailFromSession, StandardCharsets.UTF_8);
-        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/purchases/history?email=" + encodedEmail, null, null);
+        String email;
+        try {
+            email = HelperUtil.getEmailFromSession();
+        } catch (Exception e) {
+            UI.getCurrent().navigate(LoginView.class);
+            return null;
+        }
+        String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/purchases/history?email=" + encodedEmail, null, null, token);
         try {
             if (data.getConnection().getResponseCode() != 200) {
                 HelperUtil.showNotification("Error occurred while processing Purchase History", NotificationVariant.LUMO_ERROR, Position.TOP_CENTER);
@@ -468,9 +475,9 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     }
 
     private JsonNode getAddressByEmail() {
-        String encodedEmail = null;
-        encodedEmail = URLEncoder.encode(emailFromSession, StandardCharsets.UTF_8);
-        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/addresses?email=" + encodedEmail, null, null);
+        String encodedEmail = URLEncoder.encode(HelperUtil.getEmailFromSession(), StandardCharsets.UTF_8);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/addresses?email=" + encodedEmail, null, null, token);
         try {
             if (data.getConnection().getResponseCode() != 200) {
                 HelperUtil.showNotification("Error occurred while processing address information", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -486,7 +493,8 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
     }
 
     private ResponseData deleteAddressById(Long addressId) {
-        ResponseData data = RestClient.requestHttp("DELETE", "http://localhost:8080/private/addresses/address/" + addressId, null, null);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("DELETE", "http://localhost:8080/private/addresses/address/" + addressId, null, null, token);
         return data;
     }
 
@@ -622,10 +630,21 @@ public class UserProfileTabs extends Composite<VerticalLayout> {
         address.setCityName(city);
 
         UserForAddress user = new UserForAddress();
-        user.setEmail(emailFromSession);
+        user.setEmail(HelperUtil.getEmailFromSession());
         address.setUser(user);
 
-        ResponseData data = RestClient.requestHttp("POST", "http://localhost:8080/private/addresses/address", address, AddAddress.class);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("POST", "http://localhost:8080/private/addresses/address", address, AddAddress.class, token);
         return data;
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        try {
+            HelperUtil.getEmailFromSession();
+        } catch (Exception e) {
+            event.forwardTo(LoginView.class);
+            return;
+        }
     }
 }

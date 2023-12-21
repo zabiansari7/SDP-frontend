@@ -30,15 +30,20 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.*;
+import de.srh.toolify.frontend.error.AccessDeniedView;
 import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.utils.PDFGen;
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.login.LoginView;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -49,7 +54,7 @@ import java.util.Objects;
 @PageTitle("AdminProfile | Toolify")
 @Route(value = "admin", layout = MainLayout.class)
 @Uses(Icon.class)
-public class AdminProfileTabs extends Composite<VerticalLayout> {
+public class AdminProfileTabs extends Composite<VerticalLayout> implements BeforeEnterObserver {
     private static final long serialVersionUID = 1L;
 
     Binder<User> binder = new Binder<>(User.class);
@@ -94,8 +99,6 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     HorizontalLayout layoutRow6 = new HorizontalLayout();
     Button saveButton = new Button();
     Button cancelButton = new Button();
-    
-    String emailFromSession = HelperUtil.getEmailFromSession();
     Category categorySelectValue;
 
 	public AdminProfileTabs() {
@@ -213,7 +216,7 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
         adminDetailsMain.add(adminDetailsHorizontalLayout);
         adminDetailsHorizontalLayout.add(adminDetailsEditButton);
         
-        User admin = getUserByEmail();
+        User admin = HelperUtil.getUserByEmail();
         binder.setBean(admin);
         binder.setReadOnly(true);
 
@@ -244,10 +247,11 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     			return;
     		}        	
         	String encodedEmail;
-            encodedEmail = URLEncoder.encode(emailFromSession, StandardCharsets.UTF_8);
+            encodedEmail = URLEncoder.encode(HelperUtil.getEmailFromSession(), StandardCharsets.UTF_8);
 
             EditUser editUser = prepareEditUser();
-        	ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/user?email=" + encodedEmail, editUser, EditUser.class);
+            String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        	ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/user?email=" + encodedEmail, editUser, EditUser.class, token);
             try {
                 if (data.getConnection().getResponseCode() != 201) {
                     HelperUtil.showNotification("Error occurred while updating user", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -287,8 +291,15 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 		notification.addThemeVariants(variant);
     }
 	
-	private User getUserByEmail() {
-    	String encodedEmail = URLEncoder.encode(emailFromSession, StandardCharsets.UTF_8);
+	/*private User getUserByEmail() {
+        String email;
+        try {
+            email = HelperUtil.getEmailFromSession();
+        } catch (Exception e) {
+            UI.getCurrent().navigate(LoginView.class);
+            return new User();
+        }
+    	String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
         ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null);
         try {
             if (data.getConnection().getResponseCode() != 200) {
@@ -302,7 +313,7 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
             throw new RuntimeException(e);
         }
         return null;
-	}
+	}*/
 
 	private VerticalLayout getAdminOrdersLayout() {    	
 		VerticalLayout main = new VerticalLayout();
@@ -394,10 +405,10 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
             try {
                 PDFGen app = new PDFGen();
                 pdf = app.createPdf(purchaseHistory);
-            } catch (DocumentException | IOException | XMPException e) {
+            } catch (DocumentException | IOException | XMPException | NullPointerException e) {
                 throw new RuntimeException(e);
             }
-            showNotification(String.format("PDF for invoice number '%d' generated successfully", invoiceNo), NotificationVariant.LUMO_SUCCESS);
+            HelperUtil.showNotification(String.format("PDF for invoice number '%d' generated successfully", invoiceNo), NotificationVariant.LUMO_SUCCESS, Position.TOP_CENTER);
             getElement().executeJs("window.open($0.href, '_blank')", pdf.getElement());
             main.add(pdf);
 
@@ -538,7 +549,8 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     private void addCategory(String name){
         Category category = new Category();
         category.setCategoryName(name);
-        ResponseData data = RestClient.requestHttp("POST", "http://localhost:8080/private/admin/categories/category", category, Category.class);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("POST", "http://localhost:8080/private/admin/categories/category", category, Category.class, token);
         try {
             if (data.getConnection().getResponseCode() != 201) {
                 HelperUtil.showNotification("Error occurred while saving category", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -624,7 +636,8 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     private void editCategory(Long categoryId, String categoryName){
         CategoryForEdit category = new CategoryForEdit();
         category.setCategoryName(categoryName);
-        ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/admin/categories/category/" + categoryId, category, CategoryForEdit.class);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/admin/categories/category/" + categoryId, category, CategoryForEdit.class, token);
         try {
             if (data.getConnection().getResponseCode() != 200) {
                 HelperUtil.showNotification("Error occurred updating the category", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -662,12 +675,14 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     }
 
     private ResponseData deleteCategoryById(Long categoryId) {
-        ResponseData data = RestClient.requestHttp("DELETE", "http://localhost:8080/private/admin/categories/category/" + categoryId, null, null);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("DELETE", "http://localhost:8080/private/admin/categories/category/" + categoryId, null, null, token);
         return data;
     }
 
     private ResponseData deleteProductById(Long productId) {
-        ResponseData data = RestClient.requestHttp("DELETE", "http://localhost:8080/private/admin/products/product/" + productId, null, null);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("DELETE", "http://localhost:8080/private/admin/products/product/" + productId, null, null, token);
         return data;
     }
 
@@ -704,7 +719,8 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 	}
 	
 	private JsonNode getPurchaseHistoryAll() {
-		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/purchases/history/all", null, null);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/purchases/history/all", null, null, token);
         try {
             if (data.getConnection().getResponseCode() != 200) {
                 HelperUtil.showNotification("Error occurred while processing purchase history", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -885,7 +901,8 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
 	
 	private  JsonNode addProduct(Binder<Product> productBinder) {
 		Product product = productBinder.getBean();
-		ResponseData data = RestClient.requestHttp("POST","http://localhost:8080/private/admin/products/product", product, Product.class);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+		ResponseData data = RestClient.requestHttp("POST","http://localhost:8080/private/admin/products/product", product, Product.class, token);
         try {
             if (data.getConnection().getResponseCode() != 201) {
                 HelperUtil.showNotification("Error saving the Product", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -1131,7 +1148,8 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
     }
 
     private JsonNode editProduct(Long productId) {
-        ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/admin/products/product/" + productId, binderProduct.getBean(), ProductForEdit.class);
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        ResponseData data = RestClient.requestHttp("PUT", "http://localhost:8080/private/admin/products/product/" + productId, binderProduct.getBean(), ProductForEdit.class, token);
         try {
             if (data.getConnection().getResponseCode() != 201) {
                 HelperUtil.showNotification("Error occurred while updating product", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
@@ -1159,5 +1177,19 @@ public class AdminProfileTabs extends Composite<VerticalLayout> {
             throw new RuntimeException(e);
         }
         return null;
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        try {
+            HelperUtil.getEmailFromSession();
+        } catch (Exception e) {
+            event.forwardTo(LoginView.class);
+            return;
+        }
+        JsonNode user = (JsonNode) VaadinSession.getCurrent().getAttribute("user");
+        if (!user.get("hasRole").toString().contains("ROLE_ADMIN")) {
+            event.forwardTo(AccessDeniedView.class);
+        }
     }
 }

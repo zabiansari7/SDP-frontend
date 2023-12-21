@@ -21,6 +21,8 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
@@ -44,6 +46,7 @@ import de.srh.toolify.frontend.data.User;
 import de.srh.toolify.frontend.error.InternalErrorView;
 import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.login.LoginView;
 import jakarta.annotation.security.PermitAll;
 
 @PageTitle("Checkout")
@@ -83,7 +86,7 @@ public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnt
     BigDecimal totalPrice = BigDecimal.ZERO;
     
     @SuppressWarnings("unchecked")
-    public CheckoutView() {
+    public CheckoutView() throws InterruptedException {
         
         getContent().setWidth("100%");
         getContent().getStyle().set("flex-grow", "1");
@@ -170,13 +173,29 @@ public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnt
         defaultPincode.setReadOnly(true);
         defaultCity.setReadOnly(true);
 
-        String email = HelperUtil.getEmailFromSession();
-        String encodedEmail = null;
-        encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
-        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null);
-        ObjectMapper mapper = new ObjectMapper();
-        User user = mapper.convertValue(data.getNode(), User.class);
-        
+        String email;
+        try {
+            email = HelperUtil.getEmailFromSession();
+        } catch (Exception e) {
+            UI.getCurrent().getPage().setLocation("http://localhost:8081/login");
+            return;
+        }
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+        String encodedEmail = URLEncoder.encode(Objects.requireNonNull(email), StandardCharsets.UTF_8);
+        User user = null;
+        ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null, token);
+        try {
+            if (data.getConnection().getResponseCode() != 200) {
+                HelperUtil.showNotification("Error occurred while processing user information", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+            } else {
+                ObjectMapper mapper = new ObjectMapper();
+                user = mapper.convertValue(data.getNode(), User.class);
+            }
+        } catch (IOException e) {
+            HelperUtil.showNotification("Error occurred while processing user information", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+            throw new RuntimeException(e);
+        }
+
         firstname.setValue(user.getFirstname());
         lastname.setValue(user.getLastname());
         defaultStreetName.setValue(user.getDefaultStreetName());
@@ -185,7 +204,6 @@ public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnt
         defaultCity.setValue(user.getDefaultCity());
         
         JsonNode addressesNode = getAddresses(encodedEmail);
-        System.out.println(addressesNode);
         
         ObjectMapper addressObjectMapper = new ObjectMapper();
         List<Address> addresses = new ArrayList<>();
@@ -222,13 +240,13 @@ public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnt
         h3.setText("Total Price €" + this.getTotalPrice());
         h3.setWidth("max-content");       
         editCartButton.setText("Edit Cart");
-        layoutColumn3.setAlignSelf(FlexComponent.Alignment.END, editCartButton);
+        layoutColumn3.setAlignSelf(Alignment.END, editCartButton);
         editCartButton.setWidth("200px");
         editCartButton.addClickListener(event -> UI.getCurrent().navigate("cart"));
         payButton.setText("Pay");
         payButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         payButton.addClassName("payButton");
-        layoutColumn3.setAlignSelf(FlexComponent.Alignment.END, payButton);
+        layoutColumn3.setAlignSelf(Alignment.END, payButton);
         payButton.setWidth("200px");
         getContent().add(layoutRow);
         
@@ -272,7 +290,25 @@ public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnt
 			}
             
             purchaseRequest.setPurchaseItems(checkoutPurchaseItems);
-        	ResponseData responseData = RestClient.requestHttp("POST", "http://localhost:8080/private/purchase/product", purchaseRequest, CheckoutRequest.class);
+        	ResponseData responseData = RestClient.requestHttp("POST", "http://localhost:8080/private/purchase/product", purchaseRequest, CheckoutRequest.class, token);
+            try {
+                if (responseData.getConnection().getResponseCode() != 201) {
+                    if (responseData.getNode().get("message").toString().contains("Quantity cannot go below 0")){
+                        HelperUtil.showNotification("One of the Product is not available in the store", NotificationVariant.LUMO_WARNING, Notification.Position.TOP_CENTER);
+                    } else {
+                        HelperUtil.showNotification("Error occurred while purchasing the Product", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+                    }
+                } else {
+                    UI.getCurrent().navigate("orderplaced");
+                }
+            } catch (IOException | NullPointerException ex) {
+                HelperUtil.showNotification("Error occurred while purchasing the Product", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+                throw new RuntimeException(ex);
+            }
+
+
+
+
         	JsonNode responseNode = responseData.getNode();
         	int code = 0;
         	try {
@@ -287,8 +323,19 @@ public class CheckoutView extends Composite<VerticalLayout> implements BeforeEnt
     }
     
     private JsonNode getAddresses(String email) {
-		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/addresses?email=" + email, null, null);
-		return data.getNode();
+        String token = (String) VaadinSession.getCurrent().getAttribute("token");
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/addresses?email=" + email, null, null, token);
+        try {
+            if (data.getConnection().getResponseCode() != 200) {
+                HelperUtil.showNotification("Error occurred while processing user Address", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+            } else {
+                return data.getNode();
+            }
+        } catch (IOException e) {
+            HelperUtil.showNotification("Error occurred while processing user Address", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+            throw new RuntimeException(e);
+        }
+		return null;
     }
     
     private H3 createHeader(String text) {

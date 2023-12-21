@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import de.srh.toolify.frontend.utils.HelperUtil;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -153,12 +156,17 @@ public class ProductDescriptionView extends Composite<VerticalLayout> implements
 		quantity.setMax(Integer.valueOf(maxQuantityNode));
 		addToCartButton.addClassName("clickable-button");
 		addToCartButton.addClickListener(event -> {
-			ObjectMapper mapper = new ObjectMapper();
-			Product product = mapper.convertValue(productNode, Product.class);
-			PurchaseItem purchase = new PurchaseItem(product.getProductId(), product.getQuantity(), product.getPrice(), product.getName(), quantity.getValue());
-			CartService.getInstance().addToCart(purchase);
-			UI.getCurrent().navigate(CartView.class);
-			
+            try {
+                HelperUtil.getEmailFromSession();
+                ObjectMapper mapper = new ObjectMapper();
+                Product product = mapper.convertValue(productNode, Product.class);
+                PurchaseItem purchase = new PurchaseItem(product.getProductId(), product.getQuantity(), product.getPrice(), product.getName(), quantity.getValue());
+                CartService.getInstance().addToCart(purchase);
+                UI.getCurrent().navigate(CartView.class);
+            } catch (Exception e) {
+                HelperUtil.showNotification("Please Login to add Products to Cart", NotificationVariant.LUMO_WARNING, Notification.Position.TOP_CENTER);
+            }
+
 		});
 		
 		List<Pair<String, String>> keyValuePairs = convertPProductToList(productNode);

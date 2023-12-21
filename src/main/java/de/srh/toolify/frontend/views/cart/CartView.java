@@ -21,6 +21,8 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
@@ -28,13 +30,14 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 import de.srh.toolify.frontend.data.PurchaseItem;
 import de.srh.toolify.frontend.utils.HelperUtil;
 import de.srh.toolify.frontend.views.MainLayout;
+import de.srh.toolify.frontend.views.login.LoginView;
 import jakarta.annotation.security.PermitAll;
 
 @PageTitle("Cart | Toolify")
 @Route(value = "cart", layout = MainLayout.class)
 @PermitAll
 @Uses(Icon.class)
-public class CartView extends Composite<VerticalLayout> {
+public class CartView extends Composite<VerticalLayout> implements BeforeEnterObserver {
 
 	private static final long serialVersionUID = -8245968777291604244L;
 
@@ -111,7 +114,7 @@ public class CartView extends Composite<VerticalLayout> {
 		}
 		checkoutButton.addClickListener(event -> {
 			if (carts.isEmpty() || Objects.equals(totalPriceLabel.getElement().getText(), "€0.00")) {
-				HelperUtil.showNotification("Cannot proceed to checkout if Cart is empty", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+				HelperUtil.showNotification("Cannot proceed to checkout if Cart is empty", NotificationVariant.LUMO_WARNING, Notification.Position.TOP_CENTER);
 				return;
 			}
 			UI.getCurrent().navigate("checkout");
@@ -185,4 +188,13 @@ public class CartView extends Composite<VerticalLayout> {
 		this.totalPrice = totalPrice;
 	}
 
+	@Override
+	public void beforeEnter(BeforeEnterEvent event) {
+		try {
+			HelperUtil.getEmailFromSession();
+		} catch (Exception e) {
+			event.forwardTo(LoginView.class);
+			return;
+		}
+	}
 }

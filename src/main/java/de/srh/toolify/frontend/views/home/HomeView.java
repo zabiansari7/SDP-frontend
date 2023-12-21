@@ -57,12 +57,10 @@ public class HomeView extends Composite<VerticalLayout> {
         getContent().setFlexGrow(1.0, layoutColumn2);
         layoutColumn2.setWidth("100%");
         layoutColumn2.getStyle().set("flex-grow", "1");
-        System.out.println("VADIN SESSION CURRENT AVAILABLE :: " + VaadinSession.getCurrent().getAttribute("token"));
         
         layoutRow.add(registerButton);
         layoutRow.add(loginButton);
         if (VaadinSession.getCurrent().getAttribute("token") != null && VaadinSession.getCurrent().getAttribute("token") != "" ) {
-        	System.out.println("VADIN SESSION :: " + VaadinSession.getCurrent().getAttribute("token"));
 			registerButton.setText("Profile");
 			loginButton.setText("Logout");
 		}

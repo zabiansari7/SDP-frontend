@@ -1,22 +1,26 @@
 package de.srh.toolify.frontend.utils;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.server.VaadinSession;
-
 import de.srh.toolify.frontend.client.RestClient;
 import de.srh.toolify.frontend.data.Category;
 import de.srh.toolify.frontend.data.PurchaseHistory;
 import de.srh.toolify.frontend.data.ResponseData;
+import de.srh.toolify.frontend.data.User;
+import de.srh.toolify.frontend.views.login.LoginView;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class HelperUtil {
 	
@@ -40,7 +44,7 @@ public class HelperUtil {
 	}
 	
 	public static List<PurchaseHistory> sortByTimeDescending(JsonNode purchaseHistoriesNode) {
-		List<PurchaseHistory> purchaseHistories = new ArrayList<>();
+        List<PurchaseHistory> purchaseHistories = new ArrayList<>();
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.registerModule(new JavaTimeModule());
 		purchaseHistoriesNode.forEach(purchaseHistoryNode -> {
@@ -54,32 +58,67 @@ public class HelperUtil {
     }
 	
 	public static List<String> getAllCategories() {
-		ResponseData resp = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
-		List<String> categories = new ArrayList<>();
-		for (JsonNode categoryNode : resp.getNode()) {
-			categories.add(categoryNode.get("categoryName").textValue());
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/public/categories/all", null, null);
+		try {
+			if (data.getConnection().getResponseCode() != 200) {
+				HelperUtil.showNotification("Error occurred while processing categories", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			} else {
+				List<String> categories = new ArrayList<>();
+				for (JsonNode categoryNode : data.getNode()) {
+					categories.add(categoryNode.get("categoryName").textValue());
+				}
+				return categories;
+			}
+		} catch (IOException e) {
+			HelperUtil.showNotification("Error occurred while processing categories", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			throw new RuntimeException(e);
 		}
-		return categories;
+		return null;
+	}
+
+	public static ResponseData getAllProducts() {
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/public/products/all", null, null);
+		try {
+			if (data.getConnection().getResponseCode() != 200) {
+				HelperUtil.showNotification("Error occurred while processing products", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			} else {
+				return data;
+			}
+		} catch (IOException e) {
+			HelperUtil.showNotification("Error occurred while processing products", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			throw new RuntimeException(e);
+		}
+		return null;
 	}
 
 	public static List<Category> getAllCategoriesAsClass() {
-		ResponseData resp = RestClient.requestHttp("GET", "http://localhost:8080/private/admin/categories/all", null, null);
-		ObjectMapper mapper = HelperUtil.getObjectMapper();
-		List<Category> categories = new ArrayList<>();
-		for (JsonNode categoryNode : resp.getNode()) {
-			Category category = mapper.convertValue(categoryNode, Category.class);
-			categories.add(category);
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/public/categories/all", null, null);
+		try {
+			if (data.getConnection().getResponseCode() != 200) {
+				HelperUtil.showNotification("Error occurred while processing categories", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			} else {
+				ObjectMapper mapper = HelperUtil.getObjectMapper();
+				List<Category> categories = new ArrayList<>();
+				for (JsonNode categoryNode : data.getNode()) {
+					Category category = mapper.convertValue(categoryNode, Category.class);
+					categories.add(category);
+				}
+				return categories;
+			}
+		} catch (IOException e) {
+			HelperUtil.showNotification("Error occurred while processing categories", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			throw new RuntimeException(e);
 		}
-		return categories;
+		return null;
 	}
 
 	public static PurchaseHistory getPurchaseByInvoice(int invoice) {
 		ObjectMapper mapper = HelperUtil.getObjectMapper();
-		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/purchase/history/" + invoice, null, null);
+		String token = (String) VaadinSession.getCurrent().getAttribute("token");
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/purchase/history/" + invoice, null, null, token);
 		try {
 			if (data.getConnection().getResponseCode() != 200) {
 				HelperUtil.showNotification("Error occurred while downloading invoice", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
-				//throw new RuntimeException("Error occurred while downloading invoice");
 			} else {
 				JsonNode purchaseNode = data.getNode();
 				PurchaseHistory purchaseHistory = mapper.convertValue(purchaseNode, PurchaseHistory.class);
@@ -92,4 +131,28 @@ public class HelperUtil {
 		return null;
 	}
 
+	public static User getUserByEmail() {
+		String email;
+		try {
+			email = HelperUtil.getEmailFromSession();
+		} catch (Exception e) {
+			UI.getCurrent().navigate(LoginView.class);
+			return new User();
+		}
+		String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+		String token = (String) VaadinSession.getCurrent().getAttribute("token");
+		ResponseData data = RestClient.requestHttp("GET", "http://localhost:8080/private/user?email=" + encodedEmail, null, null, token);
+		try {
+			if (data.getConnection().getResponseCode() != 200) {
+				HelperUtil.showNotification("Error occurred while processing user information", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			} else {
+				ObjectMapper mapper = new ObjectMapper();
+				return mapper.convertValue(data.getNode(), User.class);
+			}
+		} catch (IOException e) {
+			HelperUtil.showNotification("Error occurred while processing user information", NotificationVariant.LUMO_ERROR, Notification.Position.TOP_CENTER);
+			throw new RuntimeException(e);
+		}
+		return null;
+	}
 }
